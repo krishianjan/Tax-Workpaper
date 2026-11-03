@@ -309,6 +309,7 @@ model Adjustment {
   supersedesId  String?
   version       Int      @default(0)
   status        String   @default("draft")
+  standardVersion Int? // firm-standards version this was evaluated under (7.1)
   createdAt     DateTime @default(now())
   approvedAt    DateTime?
 
@@ -387,6 +388,7 @@ model Decision {
   watchedLineKeys String[]
   weakEvidenceAccepted Boolean @default(false)
   missingEvidenceResolved Boolean @default(false)
+  standardVersion Int? // firm-standards version this was evaluated under (7.1)
   createdAt       DateTime @default(now())
 
   @@index([issueId])
@@ -472,6 +474,7 @@ model SignOff {
   status      String   @default("valid")
   reopenReason String?
   diff        String?
+  standardVersion Int? // firm-standards version this was signed under (7.1)
 
   @@index([scope])
   @@index([status])
@@ -615,4 +618,50 @@ model Event {
   hash       String
 
   @@index([entityKind, entityId])
+}
+
+// ---------------------------------------------------------------------------
+// Block 4 — Firm (Feature 7)
+// ---------------------------------------------------------------------------
+
+// 7.1 Firm-wide standards, versioned. An admin edit creates a NEW row (version).
+// Every Decision/Adjustment/SignOff records the version it was evaluated under
+// (standardVersion columns below). Past approvals are never silently re-graded.
+model FirmStandard {
+  version   Int      @id @default(autoincrement())
+  content   Json // normalized StandardContent (thresholds, levels, rules, steps, retention)
+  createdBy String?
+  note      String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+// 7.2 Sensitive fields, encrypted at rest with AES-256-GCM. Only reachable
+// through revealSensitive(actor, ref, reason), which logs a ViewLog. Everything
+// else stores the maskToken.
+model SensitiveValue {
+  id          String   @id @default(cuid())
+  ref         String   @unique // stable address, e.g. "person:theo:ssn"
+  kind        String // ssn | itin | ein | account | routing | ip_pin | pin_8879 | dob
+  ciphertext  String // base64
+  iv          String // base64
+  authTag     String // base64
+  maskToken   String // "•••-••-3390"
+  ownerEntity String? // person/doc id this belongs to
+  engagementId String?
+  createdAt   DateTime @default(now())
+
+  @@index([kind])
+}
+
+// 7.4 Staff lifecycle state (deactivation, clearance changes). Kept separate
+// from the imported Staff row so import stays idempotent. Clearance changes are
+// logged via the Event log.
+model StaffState {
+  staffId      String   @id
+  active       Boolean  @default(true)
+  clearance    Boolean  @default(false)
+  deactivatedAt DateTime?
+  note         String?
+  updatedAt    DateTime @default(now())
 }

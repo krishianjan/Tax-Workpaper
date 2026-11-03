@@ -102,9 +102,12 @@ export const ReturnVersionSchema = z.object({
 
 export const StaffSchema = z.object({
   id: z.string(),
+  name: z.string().nullable().optional(),
   role: z.string(),
   credential: z.string().nullable().optional(),
   sensitive_data_clearance: z.boolean().default(false),
+  active_from: z.string().nullable().optional(),
+  note: z.string().nullable().optional(),
 });
 
 export const PacketSchema = z
