@@ -138,6 +138,25 @@ export async function revealSensitive(formData: FormData): Promise<string> {
   return plaintext;
 }
 
+export interface RevealState {
+  ok: boolean;
+  ref?: string;
+  value?: string;
+  error?: string;
+}
+
+/** Form-friendly wrapper for useActionState: never throws, returns the plaintext
+ *  for display this one response only. */
+export async function revealSensitiveAction(_prev: RevealState, formData: FormData): Promise<RevealState> {
+  try {
+    const ref = String(formData.get("ref") ?? "");
+    const value = await revealSensitive(formData);
+    return { ok: true, ref, value };
+  } catch (e) {
+    return { ok: false, error: e instanceof HttpError ? e.message : "Unable to reveal." };
+  }
+}
+
 // ---- 7.4 Staff lifecycle ----------------------------------------------------
 const DeactivateSchema = z.object({ staffId: z.string().min(1) });
 

@@ -1,7 +1,13 @@
+import Link from "next/link";
 import { loadModel } from "@/lib/packet/load";
 import { prisma } from "@/lib/db";
+import { getSession } from "@/lib/session";
 import { can, type Actor, type Action, type Role } from "@/lib/people/permissions";
 import { SectionTitle } from "@/components/ui";
+import { collectSensitiveFields } from "@/lib/firm/sensitiveCatalog";
+import { maskToken } from "@/lib/firm/sensitive";
+import { RevealField } from "@/components/RevealField";
+import { seedSensitiveStore } from "@/app/firm-actions";
 
 const ACTIONS: Action[] = [
   "content.create", "content.review", "content.approve", "signoff.reviewer", "signoff.partner",
@@ -11,7 +17,10 @@ const ACTIONS: Action[] = [
 
 export default async function AccessPage() {
   const model = loadModel();
+  const session = await getSession();
   const now = new Date().toISOString();
+  const canExport = session.staff.role === "firm_administrator" || session.staff.role === "partner";
+  const fields = collectSensitiveFields(model);
   const staff: Actor[] = model.staff.map((s) => ({
     id: s.id,
     role: s.role as Role,
@@ -66,7 +75,41 @@ export default async function AccessPage() {
         </table>
       </div>
 
+      <SectionTitle>Sensitive values (encrypted at rest; AES-256-GCM)</SectionTitle>
+      <p className="text-sm text-slate-500">
+        Stored as masked tokens; the plaintext is only produced by <span className="mono">revealSensitive</span>, which needs
+        clearance + a reason and writes a view log.{" "}
+        <form action={seedSensitiveStore} className="inline">
+          <button className="rounded border border-slate-300 px-2 py-0.5 text-xs">Seed encrypted store</button>
+        </form>
+      </p>
+      <div className="card overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
+            <tr><th className="px-3 py-2">Field</th><th className="px-3 py-2">Kind</th><th className="px-3 py-2">Value</th></tr>
+          </thead>
+          <tbody>
+            {fields.map((f) => (
+              <tr key={f.ref} className="border-t border-slate-100">
+                <td className="px-3 py-2 mono text-xs">{f.ref}</td>
+                <td className="px-3 py-2">{f.kind}</td>
+                <td className="px-3 py-2">
+                  {session.cleared ? (
+                    <RevealField refId={f.ref} mask={maskToken(f.kind, f.plaintext)} />
+                  ) : (
+                    <span className="mono">{maskToken(f.kind, f.plaintext)}</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
       <SectionTitle>View log ({viewLogs.length}) — every unmask is recorded</SectionTitle>
+      {canExport ? (
+        <p className="text-sm"><Link href="/api/viewlogs.csv">Export CSV</Link> (the export itself is logged as an event)</p>
+      ) : null}
       <ul className="space-y-1 text-sm">
         {viewLogs.length === 0 ? <li className="text-slate-500">No unmask events yet.</li> : null}
         {viewLogs.map((v) => (

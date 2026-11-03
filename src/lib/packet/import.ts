@@ -7,6 +7,9 @@ import { parseRef, resolveRef } from "../refs/resolve";
 import { verifyAll } from "../evidence/verify";
 import { computeDispositions } from "../evidence/disposition";
 import { computeDocumentLinks, computePageDuplicates } from "../evidence/links";
+import { seedFromPacket } from "../firm/standards";
+import { collectSensitiveFields } from "../firm/sensitiveCatalog";
+import { encryptField, maskToken } from "../firm/sensitive";
 
 export interface ImportReport {
   imported: boolean;
@@ -273,6 +276,27 @@ export async function importPacket(buf: Buffer): Promise<ImportReport> {
         }
       }
       if (pageLinks.length) await tx.pageLink.createMany({ data: pageLinks });
+
+      // 7.1 Seed firm standards version 1 from firm.starter_standards.
+      await tx.firmStandard.create({
+        data: { content: seedFromPacket(model) as unknown as object, createdBy: "system", note: "seeded from packet", active: true },
+      });
+
+      // 7.2 Seed the encrypted sensitive-value store (masked tokens elsewhere).
+      for (const f of collectSensitiveFields(model)) {
+        const enc = encryptField(f.plaintext);
+        await tx.sensitiveValue.create({
+          data: {
+            ref: f.ref,
+            kind: f.kind,
+            ciphertext: enc.ciphertext,
+            iv: enc.iv,
+            authTag: enc.authTag,
+            maskToken: maskToken(f.kind, f.plaintext),
+            ownerEntity: f.ownerEntity,
+          },
+        });
+      }
 
       await emitEvent(tx, {
         actorId: "system",

@@ -270,9 +270,64 @@ The role switcher is staff-only; client commands build a client actor from the
 signer id (cu-01/cu-02). Real client authentication is a separate concern noted
 for later; `can()` still enforces client isolation on every client command.
 
-## Open questions (carried to Block 2)
+## Block 4 — Step 0 + Feature 7 (Firm)
+
+### D34 — Cross-form duplicate detection keys on the shared account, not the issuer
+`CROSS_FORM_DUPLICATE_INCOME` groups income lines by (type, amount, recipient,
+account token parsed from the page, e.g. "account ending 7731") and fires only
+when two DIFFERENT documents with DIFFERENT issuer names report the same amount.
+That is exactly the D28/D29 sweep case Block 1's `DUPLICATE_DOCUMENT` (issuer +
+form + EIN) cannot see. The effect removes one copy (−1,840 interest).
+
+### D35 — FX period rule: income at the year average, balances at year-end
+`FX_RATE_PERIOD` treats SchB/SchC foreign lines as flows (correct rate =
+`<taxYear>_average`) and F8938 / FBAR / `.max`/`.ye` lines as snapshots (correct
+rate = `<taxYear>_year_end`). So SchB.1.6 (2024 average) is wrong (→ 2025 average,
+Δ +124) while F8938 (2025 year-end) passes. Recomputation rounds to whole dollars
+to match the engine's line precision.
+
+### D36 — SEP nondeductible and basis gaps are raised, never adjudicated
+`NONDEDUCTIBLE_CONTRIBUTION` and `BASIS_GAP` have NO return tax effect
+(`judgment: true`); they open a compliance / scope Issue marked "CPA to
+determine". The app flags; the CPA decides (and, for the SEP, an OutsideFiling
+row is opened to evaluate Form 5330 / corrective action).
+
+### D37 — Firm-standard thresholds are pinned constants on top of the packet
+`firm.starter_standards` states the partner threshold ($1,000), retention
+(7 years) and confidence floor (0.60) only in prose. Version 1 of `FirmStandard`
+normalizes them into structured fields (`PARTNER_THRESHOLD_DEFAULT`, etc.). An
+admin edit creates a new version; `reclassifyImpact` shows which graded items
+WOULD change level — a past approval is never silently re-graded, and frozen
+engagements keep their version.
+
+### D38 — Sensitive values live in an encrypted side table, revealed one response at a time
+Sensitive fields are catalogued from the packet (`person:<id>:ssn`,
+`household:bank:account`, …), encrypted with AES-256-GCM (`FIELD_ENCRYPTION_KEY`;
+a fixed test key when unset), and stored in `SensitiveValue`; everywhere else
+shows the mask token. `revealSensitive` gates on clearance + assignment + a
+reason, writes a `ViewLog`, and returns the plaintext for that one response
+(never cached). The leak scanner runs over masked output; `maskPrintedContent`
+already breaks SSN/EIN/long-digit runs, so uncleared renders are leak-free.
+
+### D39 — Search is permission/mask-filtered before ranking and is not an oracle
+Global search masks every returned field (title, body, snippet) for uncleared
+viewers and hides `staffOnly` rows from clients. A sensitive-looking query from
+an uncleared user returns `[]` regardless of whether a value exists, so search
+cannot be used to confirm a match. Postgres FTS + `pg_trgm` is the DB plan; the
+pure core mirrors the ranking (token overlap + trigram Jaccard fallback).
+
+### D40 — Retention is a recorded dry-run; this app never deletes
+`retentionPlan` computes destroy-after = filed + retentionYears and reports
+`would_destroy` only when past retention with no legal hold. Any open notice is a
+legal hold that forces `hold`. The job is always `dryRun: true` — it lists what
+it would destroy and records the decision; nothing is ever deleted here.
+
+## Open questions (carried forward)
 - Coinhaven lot **C6** (F8949.H.C6): basis 0, engine used transfer-in date;
   message evidence says 2021 purchase ≈ $3,050 but the bank line is pending.
   Needs the `MISSING_OR_ZERO_BASIS` check + a client question.
 - Whether any `partial_extraction` document should block a line pending the
   reconciliation check (D30/D31 page 32).
+- Feature 8 (Records): tie-out checks + `TAX_COMPUTATION_RECOMPUTE` are not yet
+  built; `standardVersion` is recorded on new writes but not yet surfaced per
+  record.
