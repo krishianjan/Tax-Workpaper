@@ -1,0 +1,285 @@
+// Miraflores Tax Workpaper — data model
+// Three layers: A (raw, immutable) · B (normalized packet, read-only) · C (workpaper, ours)
+// See docs/DATA_MODEL.md for the ER diagram and rationale.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Layer A — Raw (immutable). Never mutated. Re-importing the same sha is a no-op.
+// ---------------------------------------------------------------------------
+model PacketImport {
+  id         String   @id @default(cuid())
+  sha256     String   @unique
+  raw        Json
+  importedAt DateTime @default(now())
+  isActive   Boolean  @default(false)
+}
+
+// ---------------------------------------------------------------------------
+// Layer B — Normalized packet (read-only after import)
+// ---------------------------------------------------------------------------
+model Document {
+  id                String   @id // "D09"
+  title             String
+  documentType      String
+  issuer            String?
+  belongsTo         String?
+  taxYear           Int?
+  receivedAt        DateTime?
+  uploadedBy        String?
+  fileName          String?
+  pageCount         Int
+  markedCorrected   Boolean  @default(false)
+  extractionStatus  String // extracted | partial | not_extracted
+  extractionReason  String?
+
+  pages            Page[]
+  extractedValues  ExtractedValue[]
+}
+
+model Page {
+  documentId     String
+  pageNo         Int
+  printedContent String
+  renderKind     String  @default("simulated") // simulated | pdf
+  assetUri       String?
+
+  document Document @relation(fields: [documentId], references: [id])
+
+  @@id([documentId, pageNo])
+}
+
+model ExtractedValue {
+  id          String  @id // "ev-0035"
+  documentId  String
+  pageNo      Int?
+  field       String
+  label       String?
+  valueJson   Json
+  valueType   String
+  textAsRead  String
+  position    Json?
+  confidence  Float
+
+  document Document @relation(fields: [documentId], references: [id])
+
+  @@index([documentId, pageNo])
+  @@index([valueType])
+}
+
+model ClientItem {
+  id      String   @id // qa-NN | msg-NN | call-NN
+  kind    String // questionnaire | message | call_note
+  payload Json
+  at      DateTime?
+}
+
+model ReturnVersion {
+  id                  String   @id // v1 | v2 | v3
+  computedAt          DateTime
+  trigger             String?
+  summary             Json
+  taxEffectRates      Json
+  documentsUsed       String[]
+  documentsSuperseded String[]
+
+  lines       ReturnLine[]
+  diagnostics Diagnostic[]
+}
+
+model ReturnLine {
+  versionId    String
+  key          String
+  jurisdiction String
+  form         String?
+  line         String?
+  label        String?
+  valueJson    Json
+  rule         String?
+  note         String?
+
+  version ReturnVersion @relation(fields: [versionId], references: [id])
+
+  @@id([versionId, key])
+  @@index([versionId])
+}
+
+model LineInput {
+  id        String @id @default(cuid())
+  versionId String
+  lineKey   String
+  inputKey  String
+
+  @@index([versionId, lineKey])
+}
+
+model LineSource {
+  id        String  @id @default(cuid())
+  versionId String
+  lineKey   String
+  refRaw    String
+  refKind   String
+  targetId  String?
+  resolved  Boolean @default(false)
+
+  @@index([versionId, lineKey])
+  @@index([refRaw])
+}
+
+model Diagnostic {
+  id        String @id @default(cuid())
+  versionId String
+  code      String
+  severity  String
+  message   String
+  refs      String[]
+
+  version ReturnVersion @relation(fields: [versionId], references: [id])
+
+  @@index([versionId])
+}
+
+model Staff {
+  id                    String  @id // st-01
+  role                  String
+  credential            String?
+  sensitiveDataClearance Boolean @default(false)
+}
+
+model ClientUser {
+  id      String @id
+  payload Json
+}
+
+// prior_years, tax_agency_records, timeline, engine_reference kept as blobs,
+// reachable by JSON pointer through the resolver.
+model PacketBlob {
+  key     String @id // prior_years | tax_agency_records | timeline | engine_reference | household | firm | fx_rates
+  payload Json
+}
+
+// ---------------------------------------------------------------------------
+// Layer C — Workpaper (ours). Grows in later blocks. Confidence is never a status.
+// ---------------------------------------------------------------------------
+model Verification {
+  id               String   @id @default(cuid())
+  extractedValueId String
+  status           String // agreed_to_source | mismatch_with_source | not_printed | needs_human | human_verified | human_corrected
+  method           String // auto | human
+  verificationType String?
+  sourceText       String?
+  correctedValue   String?
+  actorId          String?
+  at               DateTime @default(now())
+  note             String?
+  version          Int      @default(0)
+
+  @@index([extractedValueId])
+}
+
+model DocumentLink {
+  id        String @id @default(cuid())
+  fromDocId String
+  toDocId   String
+  kind      String // duplicate_of | supersedes | same_issuer | related_prior_year
+  basis     Json?
+  method    String // auto | human
+  actorId   String?
+
+  @@index([fromDocId])
+  @@index([toDocId])
+}
+
+model PageLink {
+  id              String @id @default(cuid())
+  docId           String
+  pageNo          Int
+  duplicateOfPage Int
+  basis           Json?
+
+  @@index([docId])
+}
+
+model Disposition {
+  documentId String @id
+  status     String // used | duplicate_not_counted | superseded | partial_extraction | structured_elsewhere | received_after_return | unaccounted
+  reason     String?
+  refs       String[]
+}
+
+model CheckRun {
+  id          String   @id @default(cuid())
+  versionId   String
+  at          DateTime @default(now())
+  codeVersion String?
+
+  results CheckResult[]
+}
+
+model CheckResult {
+  id           String  @id // stable finding id = sha256(checkId + sorted refs)
+  runId        String
+  checkId      String
+  status       String // pass | fail | warn | info
+  title        String
+  expected     Json?
+  actual       Json?
+  delta        BigInt?
+  taxEffectFed BigInt?
+  taxEffectCa  BigInt?
+  rateCategory String?
+  refs         String[]
+  explanation  String?
+  suggestedFix Json?
+
+  run CheckRun @relation(fields: [runId], references: [id])
+
+  @@index([runId])
+  @@index([checkId])
+}
+
+model Attachment {
+  id         String   @id @default(cuid())
+  kind       String // file | message | note
+  storageUri String?
+  sha256     String?
+  text       String?
+  uploadedBy String?
+  at         DateTime @default(now())
+
+  links AttachmentLink[]
+}
+
+model AttachmentLink {
+  id           String @id @default(cuid())
+  attachmentId String
+  targetKind   String // document | extracted_value | line | check_result
+  targetId     String
+
+  attachment Attachment @relation(fields: [attachmentId], references: [id])
+
+  @@index([targetKind, targetId])
+}
+
+// Append-only. Every workpaper write emits one. Hash-chained for tamper-evidence.
+model Event {
+  seq        Int      @id @default(autoincrement())
+  id         String   @unique @default(cuid())
+  at         DateTime @default(now())
+  actorId    String?
+  type       String
+  entityKind String
+  entityId   String
+  payload    Json
+  prevHash   String?
+  hash       String
+
+  @@index([entityKind, entityId])
+}
