@@ -534,6 +534,73 @@ model SoftLock {
   @@unique([entityKind, entityId])
 }
 
+// ---------------------------------------------------------------------------
+// Block 3 — Filing and after
+// ---------------------------------------------------------------------------
+model FilingStatus {
+  jurisdiction String   @id // federal | california
+  state        String   @default("in_preparation")
+  updatedAt    DateTime @default(now())
+}
+
+model Submission {
+  id           String   @id // the agency submission id (immutable once rejected/accepted)
+  jurisdiction String
+  snapshotHash String
+  status       String // transmitted | rejected | accepted | not_transmitted
+  errors       Json     @default("[]")
+  at           DateTime
+
+  @@index([jurisdiction])
+}
+
+model Extension {
+  id                  String   @id @default(cuid())
+  form                String
+  filedBy             String
+  basisVersion        String
+  estimatedBalanceCents BigInt
+  paidCents           BigInt
+  roundingRule        String
+  note                String
+  filedAt             DateTime @default(now())
+}
+
+model AmendmentCase {
+  id               String   @id @default(cuid())
+  jurisdiction     String
+  reason           String
+  baseSnapshotId   String // the filed snapshot — never mutated
+  baseSnapshotHash String
+  openedBy         String
+  status           String   @default("open")
+  createdAt        DateTime @default(now())
+}
+
+model Notice {
+  id           String   @id // N-2025-L566
+  agency       String
+  type         String
+  taxYear      Int
+  dated        DateTime
+  responseDue  DateTime?
+  status       String   @default("open")
+  items        Json     @default("[]")
+  legalHold    Boolean  @default(true)
+  responsePackHash String?
+  createdAt    DateTime @default(now())
+}
+
+model ReplayConflict {
+  id         String   @id @default(cuid())
+  eventId    String
+  scripted   String
+  finalState String
+  resolution String
+  note       String
+  at         DateTime @default(now())
+}
+
 // Append-only. Every workpaper write emits one. Hash-chained for tamper-evidence.
 model Event {
   seq        Int      @id @default(autoincrement())

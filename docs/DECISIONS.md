@@ -172,6 +172,59 @@ a 2025 document. The outside-filings register is derived from related returns an
 engine diagnostics (FBAR, 8938, 3520, 1099-NEC, Woodworks 1120-S, Ridgeline 1065,
 Ada's 1040, Texas n/a).
 
+## Block 3 — Filing and after (Feature 6)
+
+### D34 — Gate = required steps computed from data, plus guards
+The filing gate recomputes the 12 `required_steps` from data (not checkboxes),
+and adds: no open blocking notes/questions, no reopened sign-offs, completeness
+green, no stale adjustments, no unapproved judgment issues, and both spouses
+signed. A failed gate lists the exact blockers. "Diagnostics resolved" and "due
+diligence completed" are shown honestly (red until the work is done).
+
+### D35 — A rejected submission is immutable; retransmit is a new submission
+Rejections are kept forever (keyed by the agency submission id). CA is held while
+federal is rejected (`STATE-HOLD`) and may transmit only after federal
+acceptance. The 8879/signed snapshot hash must equal the transmitted snapshot
+hash.
+
+### D36 — Reject code → correction via a table
+`R0000-504-02` maps (no string matching) to the Theo identity correction + a
+client question, and records honestly that the mismatch was caught before filing
+(Block 1). D71 + msg-10 drive a FactCorrection 666-74-3309 → 666-74-3390.
+
+### D37 — Freeze per jurisdiction; amend on top
+Acceptance writes a `Snapshot(kind=filed)` and freezes that jurisdiction
+(federal 07-14, CA 07-15). Writes to frozen content 409. An amendment is a new
+case referencing the filed snapshot as an immutable base. `Reset season` clears
+the replayed filing artifacts so the workpaper is editable again in a demo.
+
+### D38 — We compute interest/FTP ourselves; the tl-25 ReplayConflict
+Post-filing interest (7%/yr daily from 2026-04-15) and FTP (0.5%/month or part
+month) are computed from `post_filing_rates`. The final is an overpayment, so
+both are 0 — and the scripted "federal balance paid" (tl-25) is recorded as a
+`ReplayConflict` (refund expected), never invented as a payment. CA's refund
+(tl-26) is consistent. Replay is deterministic and idempotent (stable ids; the
+replay hash is order-independent of equal-time events).
+
+### D39 — Notice items map to lines via a configurable table
+`L566_ITEM_MAP` maps each examination item to its lines/documents/adjustments
+(no string matching). The response pack is built from the frozen snapshot with a
+manifest of every file's sha256 + the snapshot hash, so it verifies without the
+app. Retention = filed + 7 years; an open notice is a legal hold that blocks
+destruction.
+
+### D40 — Rollforward carries v3 carryovers (+ approved finals) with provenance
+Carryovers come from v3 `carryovers_out` tagged with the approved adjustment ids
+that bear on them (MTC 3,871; Ridgeline capital 63,660; SEP 2,786; CA depreciation
+basis diffs). 2026 expected documents exclude ended sources (stock-plan issuers =
+former employer Corvane; payoff-statement issuers = Lonestar; seller-closing
+issuers = Barton Hills). 2026 estimates: federal 110% of 2025 final total tax in
+4 equal installments; CA 30/40/30 on CA-source income only.
+
+### D41 — Firm time zone America/Chicago
+The firm's Austin address implies America/Chicago; deadlines are stored UTC and
+displayed in that zone (recorded assumption, shared with D30).
+
 ## Block 3 — People (Feature 5)
 
 ### D27 — One permission function, deny by default
