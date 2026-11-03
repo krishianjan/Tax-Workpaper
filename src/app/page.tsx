@@ -4,7 +4,8 @@ import { getSession } from "@/lib/session";
 import { verifyAll, verificationSummary } from "@/lib/evidence/verify";
 import { computeDispositions, dispositionSummary, currentVersion } from "@/lib/evidence/disposition";
 import { computeDocumentLinks } from "@/lib/evidence/links";
-import { formatDollars } from "@/lib/money";
+import { runChecks, sortByImpact, previewTotals } from "@/lib/checks/runner";
+import { formatDollars, formatCents } from "@/lib/money";
 import { Stat, SectionTitle, VerificationBadge, DispositionChip } from "@/components/ui";
 import type { VerificationStatus } from "@/lib/evidence/verify";
 import type { DispositionStatus } from "@/lib/evidence/disposition";
@@ -28,6 +29,13 @@ export default async function OverviewPage() {
   const disp = computeDispositions(model, session.asOf);
   const dsum = dispositionSummary(disp);
   const links = computeDocumentLinks(model);
+
+  const findings = sortByImpact(runChecks({ model, versionId: cur?.version ?? "v3" }));
+  const preview = previewTotals(findings);
+  const failingByArea = new Map<string, number>();
+  for (const f of findings) {
+    if (f.status === "fail" || f.status === "warn") failingByArea.set(f.area, (failingByArea.get(f.area) ?? 0) + 1);
+  }
 
   const needsAttention = vsum.mismatch_with_source + vsum.needs_human + vsum.not_printed;
 
@@ -98,13 +106,27 @@ export default async function OverviewPage() {
         </div>
       </section>
 
+      <section>
+        <SectionTitle>Workpaper preview (v3 + failing checks, not yet approved)</SectionTitle>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Stat label="Return total tax (fed)" value={dollarsFromSummary(cur?.summary, ["federal", "total_tax"])} />
+          <Stat label="Preview Δ tax (fed)" value={formatCents(preview.taxEffectFed)} sub={`${preview.failingCount} failing checks`} />
+          <Stat label="Preview Δ tax (CA)" value={formatCents(preview.taxEffectCa)} />
+          <Stat label="Findings" value={findings.length} sub={<Link href="/checks">open checks →</Link>} />
+        </div>
+      </section>
+
       <section className="card p-4">
-        <SectionTitle>Block 2 preview</SectionTitle>
-        <p className="text-sm text-slate-600">
-          Independent checks (books-to-tax, 8949 reconciliation, payments vs agency, state split, prior-year variance) and
-          the tax-effect preview land in the next block. The schema, event log and evidence links here already support
-          them.
-        </p>
+        <SectionTitle>Failing checks by area</SectionTitle>
+        <div className="flex flex-wrap gap-2 text-sm">
+          {[...failingByArea.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .map(([area, n]) => (
+              <Link key={area} href={`/checks?area=${encodeURIComponent(area)}`} className="chip bg-amber-100 text-amber-800">
+                {area}: {n}
+              </Link>
+            ))}
+        </div>
       </section>
     </div>
   );

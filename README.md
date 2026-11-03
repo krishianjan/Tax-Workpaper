@@ -5,9 +5,9 @@ starts where extraction stops — one JSON packet — and proves the return is
 right: where every number came from, how it was verified, where each document
 landed, and what is still open. **Not a spreadsheet.**
 
-This repository is **Block 1**: Foundation + Evidence (Feature 1) + the schema
-and event log the later blocks slot into. Calculation checks (Feature 2),
-Change, Judgment, People, Filing and Firm follow.
+This repository covers **Foundation + Evidence (Feature 1) + Calculation
+(Feature 2)** plus the schema and event log the later blocks slot into. Change,
+Judgment, People, Filing and Firm follow.
 
 ## What works now
 
@@ -33,6 +33,24 @@ Change, Judgment, People, Filing and Firm follow.
   - Linking: duplicates (D10 → D09) and corrections (D31 → D30, with a
     field-by-field diff), kept as evidence.
   - Attach notes as evidence (every write emits a hash-chained `Event`).
+- **Calculation (Feature 2)**
+  - 17 independent checks, each a pure `(ctx) => CheckResult[]` with its own
+    tests, comparing the engine to a declared **second source** (page text,
+    supplemental statement, agency transcript, prior year, deposit detail,
+    paystub, residency, client answer). It never recomputes tax.
+  - Finds the RSU basis (47,620), the 1099-K double-count (12,400), the
+    duplicate-mileage car expense (8,260→5,670), payment overstatements (federal
+    +1,000, CA +3,500), the Theo SSN mismatch, the Bright Oak name drift, the
+    M18 lot missing from 8949, prior-year swings, and the all-CA wage split
+    (judgment).
+  - **Tax-effect preview** = v3 + Σ effects of failing checks (Δ × base-version
+    rate; CA-source decided by sale date). Measured: fed −$19,857.01, CA
+    +$270.23. Judgment items are listed, not applied.
+  - `/checks` (sorted by |tax effect|, filterable), `/schedules/8949`
+    (exceptions-first, grouped by box, reconciled to Schedule D),
+    `/schedules/books-to-tax`, `/schedules/state-split` (residency bar + A–E
+    allocation + three facts).
+  - Stable finding ids = sha256(checkId + sorted refs); re-running is idempotent.
 - **Masking** enforced server-side for non-cleared staff (st-04).
 - **Security headers** (CSP, `frame-ancestors none`, `nosniff`).
 

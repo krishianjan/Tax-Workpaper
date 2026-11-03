@@ -54,6 +54,37 @@ database. The database stores the immutable raw import, the normalized packet,
 and the append-only workpaper/event layer. Server components read the model for
 display and write Layer C through server actions that emit events.
 
+## D9 — SUM_RECOMPUTE is arithmetic integrity, reported-all and triaged
+The spec asks us to recompute every line with inputs and "report all; triage
+here". A naive re-add flags 93 lines — most are legitimate subtotals that
+subtract (net profit = income − expenses; AGI nets adjustments). These are
+reported at **info** level in the "Arithmetic integrity" category, separate from
+the engine-vs-second-source checks (patch v1.1 §2). They are not return errors;
+they confirm the engine's own addition is internally consistent given its sign
+conventions. A reviewer scanning them looks for a subtotal that neither adds nor
+subtracts cleanly.
+
+## D10 — Checks compare to a second source; they never recompute tax
+Each check declares a `secondSource` (page text, supplemental statement, agency
+transcript, prior year, deposit detail, paystub, residency, client answer,
+identity document). Tax effect is always Δ × the base version's rate, never a
+re-run of the engine.
+
+## D11 — Preview excludes judgment items
+"Workpaper preview = v3 + Σ effects of failing checks (not yet approved)" sums
+only `status=fail` findings that are not `judgment`. The state-source wage split
+is a judgment call (payroll reporting vs work location vs residency are three
+different facts), so it is listed with a suggested amount but not added.
+Measured preview Δ tax: federal −$19,857.01, California +$270.23 across 55
+failing checks — the RSU basis fix (−15,536 fed), the 1099-K double-count
+(−4,402), the mileage duplicate (−919) and the federal estimate correction
+(+1,000).
+
+## D12 — Payment effects are 1:1 on balance due
+Payments and credits change tax/balance 1:1 (readme). An overstated payment
+line means the balance due was understated; correcting it increases tax owed by
+the same amount. These use a `payment` category, not a rate.
+
 ## Open questions (carried to Block 2)
 - Coinhaven lot **C6** (F8949.H.C6): basis 0, engine used transfer-in date;
   message evidence says 2021 purchase ≈ $3,050 but the bank line is pending.
