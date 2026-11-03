@@ -19,6 +19,11 @@ import { payeeNameConsistency } from "./payeeNameConsistency";
 import { clientEstimateVsThirdParty } from "./clientEstimateVsThirdParty";
 import { businessUseFromEvidence } from "./businessUseFromEvidence";
 import { personalInBusiness } from "./personalInBusiness";
+import { crossFormDuplicateIncome } from "./crossFormDuplicateIncome";
+import { fxRatePeriod } from "./fxRatePeriod";
+import { nondeductibleContribution } from "./nondeductibleContribution";
+import { basisGap } from "./basisGap";
+import { hvacInsideRepairs } from "./hvacInsideRepairs";
 
 export const ALL_CHECKS: Check[] = [
   sumRecompute,
@@ -41,9 +46,14 @@ export const ALL_CHECKS: Check[] = [
   clientEstimateVsThirdParty,
   businessUseFromEvidence,
   personalInBusiness,
+  crossFormDuplicateIncome,
+  fxRatePeriod,
+  nondeductibleContribution,
+  basisGap,
+  hvacInsideRepairs,
 ];
 
-export const CODE_VERSION = "block2-1";
+export const CODE_VERSION = "block4-0";
 
 /** Run every check and return findings, deduped by stable id (idempotent). */
 export function runChecks(ctx: CheckContext, checks: Check[] = ALL_CHECKS): CheckResult[] {

@@ -17,6 +17,8 @@ describe("expected effects recompute from v3 rates", () => {
     { id: "mileage", cents: 259000, cat: "schc_profit", caSource: false },
     { id: "m18", cents: -6000, cat: "stcg", caSource: false },
     { id: "subaru", cents: -310000, cat: "itemized", caSource: false },
+    { id: "interest_dup", cents: -184000, cat: "interest", caSource: false },
+    { id: "fx_sek", cents: 12400, cat: "interest", caSource: false },
   ];
 
   for (const c of cases) {
@@ -35,13 +37,13 @@ describe("expected effects recompute from v3 rates", () => {
     expect(ca.payCa).toBe(-350000n);
   });
 
-  it("totals: fed tax −18,232.99, CA tax −2,922.43; fed balance −17,232.99, CA balance +577.57", () => {
+  it("totals incl. Block 4 rows: fed tax −18,830.16, CA tax −3,040.83; fed balance −17,830.16, CA balance +459.17", () => {
     const t = expectedTotals();
-    expect(t.taxFed).toBe(-1823299n);
-    expect(t.taxCa).toBe(-292243n);
+    expect(t.taxFed).toBe(-1883016n);
+    expect(t.taxCa).toBe(-304083n);
     expect(t.payFed).toBe(-100000n);
     expect(t.payCa).toBe(-350000n);
-    expect(t.balanceFed).toBe(-1723299n);
-    expect(t.balanceCa).toBe(57757n);
+    expect(t.balanceFed).toBe(-1783016n);
+    expect(t.balanceCa).toBe(45917n);
   });
 });

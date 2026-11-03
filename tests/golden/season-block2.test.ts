@@ -72,10 +72,11 @@ describe("season block 2 — change flow", () => {
       final.push(apply(reviewed, app.patch!));
     }
 
-    // The four reviewer-approved and four partner-approved, as the brief states.
+    // Reviewer approves everything under the 1,000 partner threshold (incl. the
+    // Block 4 cross-form duplicate and FX rows); partner approves the four large.
     const reviewerApproved = final.filter((a) => a.approvedBy === "st-02").map((a) => a.id).sort();
     const partnerApproved = final.filter((a) => a.approvedBy === "st-03").map((a) => a.id).sort();
-    expect(reviewerApproved).toEqual(["fed_estimate", "m18", "mileage", "subaru"]);
+    expect(reviewerApproved).toEqual(["fed_estimate", "fx_sek", "interest_dup", "m18", "mileage", "subaru"]);
     expect(partnerApproved).toEqual(["ca_estimate", "k1099", "rsu_n1_n3", "rsu_n4"]);
 
     // 4. final totals = v3 summary ± the table, to the cent.

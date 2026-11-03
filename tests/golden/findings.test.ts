@@ -129,6 +129,73 @@ describe("ENGINE_DIAGNOSTICS", () => {
   });
 });
 
+describe("CROSS_FORM_DUPLICATE_INCOME", () => {
+  const f = by("CROSS_FORM_DUPLICATE_INCOME");
+  it("D28/D29 sweep interest 1,840 counted twice (SchB.1.1 + SchB.1.2)", () => {
+    const r = f.find((x) => x.status === "fail");
+    expect(r).toBeTruthy();
+    expect(r!.refs).toContain("D28");
+    expect(r!.refs).toContain("D29");
+    expect(r!.refs).toContain("SchB.1.1");
+    expect(r!.refs).toContain("SchB.1.2");
+  });
+  it("tax effect fed −640.32, CA −126.96 (interest rates)", () => {
+    const r = f.find((x) => x.status === "fail")!;
+    expect(r.delta).toBe(-184000n);
+    expect(r.taxEffectFed).toBe(-64032n);
+    expect(r.taxEffectCa).toBe(-12696n);
+  });
+  it("is NOT caught by DUPLICATE_DOCUMENT (different issuers/forms)", () => {
+    // DUPLICATE_DOCUMENT never links D28 and D29.
+    expect(has(by("DUPLICATE_DOCUMENT"), (r) => r.refs.includes("D28") && r.refs.includes("D29"))).toBe(false);
+  });
+});
+
+describe("FX_RATE_PERIOD", () => {
+  const f = by("FX_RATE_PERIOD");
+  it("SchB.1.6 Sparbanken interest used 2024 average, should be 2025 (Δ +124)", () => {
+    const r = f.find((x) => x.refs.includes("SchB.1.6") && x.status === "fail");
+    expect(r).toBeTruthy();
+    expect(r!.delta).toBe(12400n);
+    expect(r!.taxEffectFed).toBe(4315n);
+    expect(r!.taxEffectCa).toBe(856n);
+  });
+  it("F8938 lines pass (year-end rate is correct for a balance)", () => {
+    const passes = f.filter((x) => x.status === "pass" && x.refs.some((r) => r.startsWith("F8938")));
+    expect(passes.length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe("NONDEDUCTIBLE_CONTRIBUTION", () => {
+  it("SEP 2,786 nondeductible raised as compliance (no return tax effect)", () => {
+    const r = by("NONDEDUCTIBLE_CONTRIBUTION").find((x) => x.refs.includes("D26"));
+    expect(r).toBeTruthy();
+    expect(r!.judgment).toBe(true);
+    expect(r!.taxEffectFed).toBe(0n);
+    expect(r!.title).toContain("2,786");
+  });
+});
+
+describe("BASIS_GAP", () => {
+  const f = by("BASIS_GAP");
+  it("Ridgeline (D37) outside basis never computed", () => {
+    expect(has(f, (r) => r.refs.includes("D37"))).toBe(true);
+  });
+  it("S corp (D40) ending stock basis missing for 2023 and 2024", () => {
+    const scorp = f.filter((r) => r.refs.includes("D40"));
+    expect(scorp.length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe("EXPENSE_CLASSIFICATION_NOTE", () => {
+  it("SchE.14A HVAC 11,000 inside repairs links to the HVAC decision", () => {
+    const r = by("EXPENSE_CLASSIFICATION_NOTE").find((x) => x.refs.includes("SchE.14A"));
+    expect(r).toBeTruthy();
+    expect(r!.refs).toContain("decision:hvac");
+    expect(r!.judgment).toBe(true);
+  });
+});
+
 describe("stable + idempotent", () => {
   it("every finding has a 16-hex stable id", () => {
     for (const r of findings) expect(r.id, r.checkId).toMatch(/^[0-9a-f]{16}$|^error-/);
@@ -138,7 +205,7 @@ describe("stable + idempotent", () => {
     expect(new Set(again.map((r) => r.id))).toEqual(new Set(findings.map((r) => r.id)));
     expect(again.length).toBe(findings.length);
   });
-  it("runs all 20 checks", () => {
-    expect(ALL_CHECKS.length).toBe(20);
+  it("runs all 25 checks", () => {
+    expect(ALL_CHECKS.length).toBe(25);
   });
 });

@@ -45,6 +45,11 @@ const CLASS: Record<string, { cls: string; kind: IssueKind; title: string }> = {
   VERSION_DIFF: { cls: "arithmetic", kind: "arithmetic", title: "Version diff" },
   SUM_RECOMPUTE: { cls: "arithmetic", kind: "arithmetic", title: "Arithmetic integrity" },
   ENGINE_DIAGNOSTICS: { cls: "diagnostic", kind: "compliance", title: "Engine diagnostic" },
+  CROSS_FORM_DUPLICATE_INCOME: { cls: "cross_form_duplicate", kind: "return_error", title: "Same income on two forms" },
+  FX_RATE_PERIOD: { cls: "fx_rate", kind: "return_error", title: "Wrong-period foreign exchange rate" },
+  NONDEDUCTIBLE_CONTRIBUTION: { cls: "nondeductible_sep", kind: "compliance", title: "Nondeductible retirement contribution" },
+  BASIS_GAP: { cls: "basis_gap", kind: "scope", title: "Basis never computed" },
+  EXPENSE_CLASSIFICATION_NOTE: { cls: "hvac_repair_improvement", kind: "judgment", title: "Repair vs improvement (HVAC)" },
 };
 
 const CLS_TITLE: Record<string, string> = {

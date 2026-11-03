@@ -36,6 +36,12 @@ export const EXPECTED: ExpectedRow[] = [
   { issue: "fed_estimate", baseDelta: 0, category: "payment", taxFed: 0n, taxCa: 0n, payFed: -100000n, payCa: 0n },
   // CA 09/15 payment designated 2024: CA payment down 3,500 (balance +3,500 owed)
   { issue: "ca_estimate", baseDelta: 0, category: "payment", taxFed: 0n, taxCa: 0n, payFed: 0n, payCa: -350000n },
+  // Block 4 row 1 — D28/D29 cross-form duplicate interest 1,840 (sweep account 7731):
+  // remove one copy => −1,840 interest. fed −1,840 × 0.348 = −640.32 ; ca −1,840 × 0.069 = −126.96
+  { issue: "interest_dup", baseDelta: -1840, category: "interest", taxFed: -64032n, taxCa: -12696n, payFed: 0n, payCa: 0n },
+  // Block 4 row 2 — FX period: Sparbanken SEK 18,450 at 2025 average 9.86 → 1,871 (engine used 2024 10.56 → 1,747).
+  // Δ +124 interest. fed +124 × 0.348 = +43.15 ; ca +124 × 0.069 = +8.56
+  { issue: "fx_sek", baseDelta: 124, category: "interest", taxFed: 4315n, taxCa: 856n, payFed: 0n, payCa: 0n },
 ];
 
 export function expectedTotals() {
