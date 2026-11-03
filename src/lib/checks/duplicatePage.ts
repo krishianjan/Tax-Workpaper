@@ -2,7 +2,7 @@ import type { Check, CheckResult } from "./types";
 import { makeFinding } from "./types";
 import { computePageDuplicates } from "../evidence/links";
 import { linesOf, line, lineValueCents } from "./helpers";
-import { taxEffect } from "../taxEffect";
+import { taxEffects } from "../effects";
 import { formatDollars, toCents } from "../money";
 
 // Within one document, flag identical pages (after stripping parenthetical
@@ -78,8 +78,9 @@ export const duplicatePage: Check = {
               if (rate === null) continue;
               const engineExp = lineValueCents(K) ?? 0n;
               const correctExp = toCents(unique * rate) ?? 0n;
-              const delta = correctExp - engineExp;
-              const te = taxEffect(delta, "schc_profit", { model, versionId });
+              const delta = correctExp - engineExp; // line change (expense goes down)
+              // Reducing an expense INCREASES taxable profit: base delta = -(line delta).
+              const te = taxEffects(-delta, "schc_profit", { model, versionId });
               out.push(
                 makeFinding({
                   checkId: this.id,
@@ -90,9 +91,9 @@ export const duplicatePage: Check = {
                   expected: formatDollars(correctExp),
                   actual: formatDollars(engineExp),
                   delta,
-                  taxEffectFed: te.fed,
-                  taxEffectCa: te.ca,
-                  rateCategory: te.category,
+                  taxEffectFed: te.taxFed,
+                  taxEffectCa: te.taxCa,
+                  rateCategory: "schc_profit",
                   refs: [K.key, L.key, doc.id],
                   primaryRefs: [`${versionId}:${K.key}`],
                   explanation: `${K.key} = ${formatDollars(engineExp)} uses ${engineQty} × ${rate}. With the unique ${unique} it is ${formatDollars(correctExp)}.`,

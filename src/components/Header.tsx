@@ -6,10 +6,12 @@ import { setSession } from "@/app/actions";
 const NAV = [
   { href: "/", label: "Overview" },
   { href: "/documents", label: "Documents" },
+  { href: "/issues", label: "Issues" },
   { href: "/checks", label: "Checks" },
+  { href: "/changes", label: "Changes" },
+  { href: "/compare", label: "Compare" },
+  { href: "/what-if", label: "What-if" },
   { href: "/schedules/8949", label: "8949" },
-  { href: "/schedules/books-to-tax", label: "Books→Tax" },
-  { href: "/schedules/state-split", label: "State" },
 ];
 
 export default async function Header() {

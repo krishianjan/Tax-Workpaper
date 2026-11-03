@@ -33,8 +33,8 @@ export default async function ChecksPage({ searchParams }: { searchParams: Promi
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label="Failing (auto-applied)" value={preview.failingCount} />
-        <Stat label="Preview Δ tax (fed)" value={formatCents(preview.taxEffectFed)} sub="v3 + Σ failing checks" />
-        <Stat label="Preview Δ tax (CA)" value={formatCents(preview.taxEffectCa)} />
+        <Stat label="Preview Δ tax (fed)" value={formatCents(preview.taxFed)} sub="v3 + Σ failing checks" />
+        <Stat label="Preview Δ balance (fed)" value={formatCents(preview.balanceFed)} sub="tax − payments" />
         <Stat label="Total findings" value={findings.length} />
       </div>
 

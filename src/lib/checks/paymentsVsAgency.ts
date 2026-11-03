@@ -2,7 +2,6 @@ import type { Check, CheckResult } from "./types";
 import { makeFinding } from "./types";
 import { line, lineValueCents } from "./helpers";
 import { toCents, formatCents } from "../money";
-import { paymentEffect } from "../taxEffect";
 
 // Each estimated-payment line vs agency records, confirmations and client
 // answers — using the DESIGNATED tax year, not the date range.
@@ -59,8 +58,10 @@ export const paymentsVsAgency: Check = {
             expected: formatCents(agency),
             actual: formatCents(engine),
             delta,
-            taxEffectFed: paymentEffect(delta),
+            taxEffectFed: 0n,
             taxEffectCa: 0n,
+            paymentEffectFed: delta, // payment change is 1:1; balance = -delta
+            paymentEffectCa: 0n,
             rateCategory: "payment",
             refs: ["F1040.26", "qa-41", "agency:/irs_account_transcript_2025"],
             primaryRefs: [`${versionId}:F1040.26`],
@@ -106,7 +107,9 @@ export const paymentsVsAgency: Check = {
             actual: formatCents(engine),
             delta,
             taxEffectFed: 0n,
-            taxEffectCa: paymentEffect(delta),
+            taxEffectCa: 0n,
+            paymentEffectFed: 0n,
+            paymentEffectCa: delta,
             rateCategory: "payment",
             refs,
             primaryRefs: [`${versionId}:F540NR.72`],

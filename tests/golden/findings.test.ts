@@ -138,7 +138,7 @@ describe("stable + idempotent", () => {
     expect(new Set(again.map((r) => r.id))).toEqual(new Set(findings.map((r) => r.id)));
     expect(again.length).toBe(findings.length);
   });
-  it("runs all 17 checks", () => {
-    expect(ALL_CHECKS.length).toBe(17);
+  it("runs all 20 checks", () => {
+    expect(ALL_CHECKS.length).toBe(20);
   });
 });

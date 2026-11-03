@@ -268,6 +268,163 @@ model AttachmentLink {
   @@index([targetKind, targetId])
 }
 
+// ---------------------------------------------------------------------------
+// Block 2 — Change + Judgment
+// ---------------------------------------------------------------------------
+model Issue {
+  id          String   @id // stable fingerprint
+  title       String
+  area        String
+  kind        String
+  status      String   @default("open") // open | proposed | in_review | resolved | dismissed
+  findingIds  String[]
+  refs        String[]
+  ownerId     String?
+  materiality BigInt   @default(0)
+  dismissReason String?
+  version     Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model Adjustment {
+  id            String   @id @default(cuid())
+  issueId       String?
+  baseVersionId String
+  targets       Json // AdjTarget[]
+  primaryLineKey String?
+  rateCategory  String?
+  caSourceFlag  Boolean  @default(false)
+  baseDeltaCents BigInt  @default(0)
+  taxEffectFed  BigInt   @default(0)
+  taxEffectCa   BigInt   @default(0)
+  paymentEffectFed BigInt @default(0)
+  paymentEffectCa  BigInt @default(0)
+  method        String // rate_estimate | what_if_exact
+  reason        String
+  evidenceIds   String[]
+  preparedBy    String?
+  reviewedBy    String?
+  approvedBy    String?
+  batchId       String?
+  supersedesId  String?
+  version       Int      @default(0)
+  status        String   @default("draft")
+  createdAt     DateTime @default(now())
+  approvedAt    DateTime?
+
+  @@index([issueId])
+  @@index([status])
+}
+
+model FactCorrection {
+  id               String   @id @default(cuid())
+  extractedValueId String
+  original         Json // read-only copy
+  corrected        Json
+  verificationType String?
+  reason           String
+  evidenceIds      String[]
+  actorId          String?
+  at               DateTime @default(now())
+
+  @@index([extractedValueId])
+}
+
+model Batch {
+  id             String   @id @default(cuid())
+  actorId        String?
+  action         String
+  itemRefs       String[]
+  previewHash    String?
+  appliedAt      DateTime @default(now())
+  undoneByBatchId String?
+}
+
+model Snapshot {
+  id          String   @id @default(cuid())
+  label       String
+  kind        String // engine_version | review_point | client_signed | filed | manual
+  eventSeq    Int
+  asOf        DateTime
+  contentHash String
+  lines       Json
+  createdAt   DateTime @default(now())
+}
+
+model Scenario {
+  id             String   @id @default(cuid())
+  ownerId        String?
+  baseSnapshotId String?
+  changes        Json
+  result         Json
+  promotedToIds  String[]
+  createdAt      DateTime @default(now())
+}
+
+model UserCursor {
+  userId      String @id
+  lastSeenSeq Int    @default(0)
+}
+
+model Decision {
+  id              String   @id @default(cuid())
+  issueId         String?
+  question        String
+  facts           String?
+  evidenceIds     String[]
+  type            String
+  options         Json
+  selectedOptionId String?
+  authority       String?
+  positionStrength String?
+  preparedBy      String?
+  reviewedBy      String?
+  approvedBy      String?
+  status          String   @default("draft")
+  revision        Int      @default(0)
+  supersedesId    String?
+  dependencyHash  String?
+  watchedLineKeys String[]
+  createdAt       DateTime @default(now())
+
+  @@index([issueId])
+}
+
+model DueDiligence {
+  id               String   @id @default(cuid())
+  credit           String
+  personId         String?
+  items            Json
+  status           String   @default("open")
+  blockedByIssueIds String[]
+}
+
+model ExpectedDocument {
+  id                String  @id @default(cuid())
+  source            String
+  description       String
+  matchedDocumentId String?
+  status            String  @default("expected")
+}
+
+model AreaReview {
+  area              String   @id
+  computedReadiness String
+  attestedBy        String?
+  attestedAt        DateTime?
+  reason            String?
+}
+
+model OutsideFiling {
+  id              String   @id @default(cuid())
+  filing          String
+  whoFiles        String?
+  inEngagement    Boolean  @default(false)
+  status          String   @default("open")
+  evidence        String[]
+  clientNotifiedAt DateTime?
+}
+
 // Append-only. Every workpaper write emits one. Hash-chained for tamper-evidence.
 model Event {
   seq        Int      @id @default(autoincrement())

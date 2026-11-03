@@ -16,6 +16,9 @@ import { carryoverAgreement } from "./carryoverAgreement";
 import { versionDiff } from "./versionDiff";
 import { engineDiagnostics } from "./engineDiagnostics";
 import { payeeNameConsistency } from "./payeeNameConsistency";
+import { clientEstimateVsThirdParty } from "./clientEstimateVsThirdParty";
+import { businessUseFromEvidence } from "./businessUseFromEvidence";
+import { personalInBusiness } from "./personalInBusiness";
 
 export const ALL_CHECKS: Check[] = [
   sumRecompute,
@@ -35,6 +38,9 @@ export const ALL_CHECKS: Check[] = [
   versionDiff,
   engineDiagnostics,
   payeeNameConsistency,
+  clientEstimateVsThirdParty,
+  businessUseFromEvidence,
+  personalInBusiness,
 ];
 
 export const CODE_VERSION = "block2-1";
@@ -73,8 +79,8 @@ function absBig(x: bigint | null | undefined): bigint {
 /** Sort findings by |federal tax effect| then |delta|, descending. */
 export function sortByImpact(results: CheckResult[]): CheckResult[] {
   return [...results].sort((a, b) => {
-    const fa = absBig(a.taxEffectFed) + absBig(a.taxEffectCa);
-    const fb = absBig(b.taxEffectFed) + absBig(b.taxEffectCa);
+    const fa = absBig(a.taxEffectFed) + absBig(a.taxEffectCa) + absBig(a.paymentEffectFed) + absBig(a.paymentEffectCa);
+    const fb = absBig(b.taxEffectFed) + absBig(b.taxEffectCa) + absBig(b.paymentEffectFed) + absBig(b.paymentEffectCa);
     if (fa !== fb) return fa > fb ? -1 : 1;
     const da = absBig(a.delta);
     const db = absBig(b.delta);
@@ -85,23 +91,34 @@ export function sortByImpact(results: CheckResult[]): CheckResult[] {
 
 export interface PreviewTotals {
   failingCount: number;
-  taxEffectFed: bigint;
-  taxEffectCa: bigint;
+  taxFed: bigint;
+  taxCa: bigint;
+  payFed: bigint;
+  payCa: bigint;
+  balanceFed: bigint; // tax − payments
+  balanceCa: bigint;
 }
 
 /**
  * Workpaper preview = v3 + Σ effects of FAILING checks (not yet approved).
- * Judgment items are excluded from the auto-applied total.
+ * Judgment items are excluded. Tax and payment effects are kept separate;
+ * balance due = tax − payments. (A raw-finding sum is only an indicative
+ * preview — the authoritative total is computed from Issues/Adjustments so an
+ * effect is never double-counted.)
  */
 export function previewTotals(results: CheckResult[]): PreviewTotals {
-  let fed = 0n;
-  let ca = 0n;
+  let taxFed = 0n;
+  let taxCa = 0n;
+  let payFed = 0n;
+  let payCa = 0n;
   let failing = 0;
   for (const r of results) {
     if (r.status !== "fail" || r.judgment) continue;
     failing += 1;
-    fed += r.taxEffectFed ?? 0n;
-    ca += r.taxEffectCa ?? 0n;
+    taxFed += r.taxEffectFed ?? 0n;
+    taxCa += r.taxEffectCa ?? 0n;
+    payFed += r.paymentEffectFed ?? 0n;
+    payCa += r.paymentEffectCa ?? 0n;
   }
-  return { failingCount: failing, taxEffectFed: fed, taxEffectCa: ca };
+  return { failingCount: failing, taxFed, taxCa, payFed, payCa, balanceFed: taxFed - payFed, balanceCa: taxCa - payCa };
 }

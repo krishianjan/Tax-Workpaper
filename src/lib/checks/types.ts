@@ -49,9 +49,11 @@ export interface CheckResult {
   status: CheckStatus;
   expected?: unknown;
   actual?: unknown;
-  delta?: bigint | null; // cents, signed (correct - engine)
-  taxEffectFed?: bigint | null; // cents
-  taxEffectCa?: bigint | null; // cents
+  delta?: bigint | null; // cents, signed (correct - engine) on the primary line
+  taxEffectFed?: bigint | null; // cents — change in tax liability
+  taxEffectCa?: bigint | null;
+  paymentEffectFed?: bigint | null; // cents — change in payments/credits (1:1)
+  paymentEffectCa?: bigint | null;
   rateCategory?: string | null;
   refs: string[];
   explanation: string;

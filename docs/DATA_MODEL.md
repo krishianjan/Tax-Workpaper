@@ -112,7 +112,51 @@ erDiagram
     string prevHash
     string hash
   }
+  Issue ||--o{ Adjustment : "resolved by"
+  Issue {
+    string id PK
+    string kind
+    string status
+    bigint materiality
+  }
+  Adjustment {
+    string id PK
+    string issueId FK
+    string baseVersionId
+    json   targets
+    bigint taxEffectFed
+    bigint paymentEffectFed
+    string status
+    int    version
+  }
+  Decision ||--o{ Adjustment : "promotes to"
+  Decision {
+    string id PK
+    string type
+    string status
+    string dependencyHash
+  }
 ```
+
+## Block 2 — Change + Judgment (layer C additions)
+
+- **`Issue`** groups many `CheckResult`s into one problem (fingerprint = class +
+  anchor document/line). Tax effect lives on the Issue/Adjustment, deduped per
+  line — never summed across raw findings.
+- **`Adjustment`** layers over the engine base; the original packet value is
+  copied into `targets[].baseValue` and never mutated. Four effect columns keep
+  tax and payments separate. `version` gives optimistic concurrency (stale write
+  → 409). Workflow: draft → proposed → reviewed → approved; or rejected /
+  reverted / stale / absorbed. Change to an approved row = a new adjustment that
+  `supersedes` it, or a revert by the approver.
+- **`FactCorrection`** corrects an extracted value (e.g. the D62 EIN) without
+  touching the import; the `Verification` row points to it.
+- **`Batch`** records a bulk action; undo writes a compensating `Batch` and
+  events — history is never deleted.
+- **`Snapshot`** (immutable), **`Scenario`** (what-if sandbox; never affects the
+  workpaper), **`UserCursor`** (seq-based "since I last looked").
+- Judgment models (**`Decision`**, **`DueDiligence`**, **`ExpectedDocument`**,
+  **`AreaReview`**, **`OutsideFiling`**) are in the schema for Feature 4.
 
 ## Why these shapes
 

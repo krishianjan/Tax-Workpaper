@@ -85,6 +85,50 @@ Payments and credits change tax/balance 1:1 (readme). An overstated payment
 line means the balance due was understated; correcting it increases tax owed by
 the same amount. These use a `payment` category, not a rate.
 
+## Block 2 — Change (Features 3, + Step-0 fixes)
+
+### D13 — Tax, payment and balance are three separate effects
+A change carries `taxFed/taxCa` (liability) and `payFed/payCa` (payments), never
+conflated. `balance = tax − payments`. The Block-1 preview mixed them and had the
+wrong sign; fixed. Payment fixes (federal −$1,000, CA −$3,500) change the balance
+only. Verified end-to-end: final = v3 ± the hand-checked table — federal tax
+−$18,232.99, CA tax −$2,922.43, federal balance −$17,232.99, CA balance +$577.57.
+
+### D14 — Tax effect is computed from the change to the taxable BASE, not the line
+Reducing an expense increases profit, so the mileage fix (expense −$2,590) has a
+**+$919.45** federal effect, not −$919.45 (the Block-1 sign bug). Each
+`Adjustment` stores an explicit signed `baseDeltaCents`; the line's `newValue` is
+display mechanics. One adjustment can touch several lines (SchC.9/44a/44c) but
+carries exactly one effect.
+
+### D15 — Issues group findings; effects never sum raw findings
+An `Issue` = problem class + anchor document (or line). D28 basis is flagged by
+both `VALUE_VS_PRINT` (basis read as 0) and `MISSING_OR_ZERO_BASIS`; they collapse
+into one issue. Within an issue, effects are deduped per line (largest-magnitude
+finding) then summed across distinct lines — so the RSU issue nets −$15,535.56
+federal (N1+N3+N4), counted once. 15 return-affecting issues on this packet.
+
+### D16 — Partner threshold = firm `variance_review.and_over_amount` ($1,000), "> " strict
+Interpretation: the firm rule "tax effect over 1,000 requires partner sign-off"
+uses the only numeric standard in the packet. Strictly greater-than, so the
+federal payment (|balance| exactly $1,000) needs only a reviewer; the CA payment
+($3,500) needs a partner. The threshold is checked on federal **or** CA.
+
+### D17 — Payment-only adjustments need a reviewer; partner if |balance| > threshold
+Firm-standard interpretation (recorded): a payment-only change has no tax effect
+but moves the balance, so it still requires an independent approver, and a partner
+when the balance magnitude exceeds the threshold.
+
+### D18 — Rounding: half away from zero, per adjustment, then sum
+Each effect is rounded to the cent half-away-from-zero at the adjustment; callers
+sum the rounded values. This matches the hand-checked table exactly.
+
+### D19 — Modes: engine / final / preview
+`final` = engine + approved; `preview` = final + reviewed + proposed. Rebase of an
+older-base adjustment on a new version: equal to the adjustment's value →
+`absorbed`; equal to the old base → `rebased`; otherwise → `stale` (excluded,
+three values shown). The feed uses event **seq**, never timestamps.
+
 ## Open questions (carried to Block 2)
 - Coinhaven lot **C6** (F8949.H.C6): basis 0, engine used transfer-in date;
   message evidence says 2021 purchase ≈ $3,050 but the bank line is pending.

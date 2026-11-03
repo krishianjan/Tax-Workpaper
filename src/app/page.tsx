@@ -109,10 +109,10 @@ export default async function OverviewPage() {
       <section>
         <SectionTitle>Workpaper preview (v3 + failing checks, not yet approved)</SectionTitle>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Stat label="Return total tax (fed)" value={dollarsFromSummary(cur?.summary, ["federal", "total_tax"])} />
-          <Stat label="Preview Δ tax (fed)" value={formatCents(preview.taxEffectFed)} sub={`${preview.failingCount} failing checks`} />
-          <Stat label="Preview Δ tax (CA)" value={formatCents(preview.taxEffectCa)} />
-          <Stat label="Findings" value={findings.length} sub={<Link href="/checks">open checks →</Link>} />
+          <Stat label="Preview Δ tax (fed)" value={formatCents(preview.taxFed)} sub={`${preview.failingCount} failing checks`} />
+          <Stat label="Preview Δ balance (fed)" value={formatCents(preview.balanceFed)} sub="tax − payments" />
+          <Stat label="Preview Δ balance (CA)" value={formatCents(preview.balanceCa)} />
+          <Stat label="Findings" value={findings.length} sub={<Link href="/issues">open issues →</Link>} />
         </div>
       </section>
 

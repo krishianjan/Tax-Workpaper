@@ -1,11 +1,15 @@
 # Errors found
 
-Generated from the independent checks (`CheckResult` rows) run on v3. 259
-findings: 133 info, 71 warn, 55 fail. Grouped per patch v1.1 §11. We did not
-target an error count — these fall out of generic checks.
+Generated from the independent checks, then **grouped into Issues** (Block 2):
+one real-world problem may be flagged by several checks. **15 return-affecting
+issues** on v3 (we did not target a count). Tax and payment effects are kept
+separate.
 
-**Workpaper preview Δ tax (failing, auto-applied): federal −$19,857.01,
-California +$270.23.**
+**Final Δ (the 6 return-error rows + 2 payment rows), to the cent:**
+federal tax **−$18,232.99**, California tax **−$2,922.43**,
+federal balance **−$17,232.99**, California balance **+$577.57**
+(federal payment +$1,000 owed; CA payment +$3,500 owed). Judgment items (CA wage
+split, C6, phone/internet, Spotify, HVAC) are listed but excluded until approved.
 
 ## (a) Errors that change the return
 
@@ -21,6 +25,7 @@ California +$270.23.**
 | Theo SSN `666-74-3309` vs 2024 return `666-74-3390` | `IDENTITY_CONSISTENCY` | must fix before e-file |
 | Provider named "Bright Oak Preschool" vs "Bright Oak Kids Club" (same EIN) | `PAYEE_NAME_CONSISTENCY` | name reconciliation |
 | AGI 228,409 → 445,590 (and other swings) | `PRIOR_YEAR_VARIANCE` | explain the swing |
+| Donated Subaru: client estimate $6,000 vs 1098-C gross proceeds $2,900 (D66) | `CLIENT_ESTIMATE_VS_THIRD_PARTY` | itemized −3,100; fed +$806.00, CA +$148.80 |
 
 ## (b) Judgment calls (listed, not auto-applied)
 | Item | Why it's judgment |
@@ -28,6 +33,8 @@ California +$270.23.**
 | State-source wage split (D73 Austin work location vs all-CA wages 218,400) | payroll reporting vs work location vs residency — preparer decides (`STATE_SOURCE_WAGES`) |
 | Coinhaven C6 basis (transferred-in crypto; msg evidence ≈ $3,050, bank line pending) | blocked pending client evidence (`MISSING_OR_ZERO_BASIS`) |
 | qa-14 "no investments sold" vs the actual sales | correct the questionnaire with the client (`QUESTIONNAIRE_VS_DOCS`) |
+| Phone 70% / internet 50% business use (call-01) vs 100% claimed | suggested SchC.25 $2,172 (`BUSINESS_USE_FROM_EVIDENCE`) |
+| Spotify Family $216 booked to the business (call-01, personal) | suggested removal from SchC.27a.1 (`PERSONAL_IN_BUSINESS`) |
 
 ## (c) Scope / compliance items outside the return
 | Item | Note |
