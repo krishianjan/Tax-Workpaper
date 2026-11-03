@@ -12,8 +12,11 @@ const NAV = [
   { href: "/decisions", label: "Decisions" },
   { href: "/variance", label: "Variance" },
   { href: "/completeness", label: "Completeness" },
-  { href: "/compare", label: "Compare" },
-  { href: "/what-if", label: "What-if" },
+  { href: "/team", label: "Team" },
+  { href: "/review", label: "Review" },
+  { href: "/questions", label: "Questions" },
+  { href: "/client", label: "Client" },
+  { href: "/admin/access", label: "Access" },
 ];
 
 export default async function Header() {

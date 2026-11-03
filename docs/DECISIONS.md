@@ -172,6 +172,51 @@ a 2025 document. The outside-filings register is derived from related returns an
 engine diagnostics (FBAR, 8938, 3520, 1099-NEC, Woodworks 1120-S, Ridgeline 1065,
 Ada's 1040, Texas n/a).
 
+## Block 3 — People (Feature 5)
+
+### D27 — One permission function, deny by default
+`can(actor, action, resource, ctx)` is the single source the UI, API and replay
+all call. Gates: `active_from` (Sam before 2027-01-04, Marcus before 2026-03-24),
+role, client isolation (own engagement only, never internal/staff-only), admin
+cannot approve/sign tax content, frozen blocks writes (quality may still add a
+post-filing note), item-level independence (no self-review/approve/sign), and
+clearance for unmasking. Anything not explicitly allowed is denied.
+
+### D28 — `resign_on` = `amounts` (firm standard)
+The packet shows no re-signature between the Theo SSN correction (tl-22) and
+re-acceptance (tl-23), so the default re-sign policy is `amounts`: the client
+8879 covers the amount lines only. Correcting Theo's SSN (identity) reopens the
+reviewer/partner **return** sign-offs but **not** the client 8879. Order
+invalidation cascades within the return-approval chain only; the 8879 is governed
+solely by its own amounts hash. Set `firm.starter_standards.resign_on =
+amounts_and_identity` to require re-signature on identity changes.
+
+### D29 — Sign-off scope decides what reopens
+`coveredHash` is computed over the FINAL effective amounts, the identity hash
+(dependent SSNs + FactCorrections), and in-scope decision hashes. After any
+command the hashes are recomputed; a mismatch flips the sign-off to `reopened`
+with a diff, and a reopened lower level invalidates higher levels (return chain
+only).
+
+### D30 — Deadlines in UTC, displayed America/Chicago
+Deadlines are stored UTC and displayed in the firm's local zone (Austin → Chicago,
+recorded assumption). Status is computed (overdue / due soon ≤ 7 days / upcoming /
+met); the missed internal hand-off (2026-03-27) and review (2026-04-08) dates are
+shown as overdue honestly.
+
+### D31 — Notifications deduped per (user, entity, type) within 10 minutes
+Prevents a notification storm; the email adapter is a no-op stub (no keys).
+
+### D32 — Answers become evidence, acceptance ≠ resolution
+A question's answer is stored as an Attachment and auto-linked as evidence to its
+target; accepting it is a staff action that does not by itself resolve the Issue.
+A blocking question keeps the filing gate red until accepted or withdrawn.
+
+### D33 — Client actor authentication is out of scope
+The role switcher is staff-only; client commands build a client actor from the
+signer id (cu-01/cu-02). Real client authentication is a separate concern noted
+for later; `can()` still enforces client isolation on every client command.
+
 ## Open questions (carried to Block 2)
 - Coinhaven lot **C6** (F8949.H.C6): basis 0, engine used transfer-in date;
   message evidence says 2021 purchase ≈ $3,050 but the bank line is pending.

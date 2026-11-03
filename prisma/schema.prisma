@@ -427,6 +427,113 @@ model OutsideFiling {
   clientNotifiedAt DateTime?
 }
 
+// ---------------------------------------------------------------------------
+// Block 3 — People
+// ---------------------------------------------------------------------------
+model Question {
+  id          String   @id @default(cuid())
+  fromId      String
+  toId        String
+  targetKind  String
+  targetId    String
+  text        String
+  dueAt       DateTime?
+  status      String   @default("open")
+  blocksFiling Boolean @default(false)
+  answerAttachmentId String?
+  createdAt   DateTime @default(now())
+
+  @@index([targetKind, targetId])
+}
+
+model ReviewNote {
+  id         String   @id @default(cuid())
+  authorId   String
+  assigneeId String?
+  targetKind String
+  targetId   String
+  severity   String
+  status     String   @default("open")
+  thread     Json     @default("[]")
+  createdAt  DateTime @default(now())
+
+  @@index([targetKind, targetId])
+  @@index([status])
+}
+
+model SignOff {
+  id          String   @id @default(cuid())
+  level       String
+  scope       String
+  coveredRefs String[]
+  coveredHash String
+  signedBy    String
+  signedAt    DateTime @default(now())
+  status      String   @default("valid")
+  reopenReason String?
+  diff        String?
+
+  @@index([scope])
+  @@index([status])
+}
+
+model Assignment {
+  id        String   @id @default(cuid())
+  scopeKind String
+  scopeId   String
+  staffId   String
+  role      String
+  dueAt     DateTime?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([staffId])
+}
+
+model Notification {
+  id       String   @id @default(cuid())
+  userId   String
+  type     String
+  entityId String
+  message  String
+  readAt   DateTime?
+  at       DateTime @default(now())
+
+  @@index([userId])
+}
+
+model TimeEntry {
+  id      String   @id @default(cuid())
+  staffId String
+  area    String
+  minutes Int
+  note    String?
+  at      DateTime @default(now())
+
+  @@index([area])
+}
+
+model ViewLog {
+  id      String   @id @default(cuid())
+  actorId String
+  field   String
+  entityId String
+  reason  String?
+  at      DateTime @default(now())
+
+  @@index([actorId])
+}
+
+model SoftLock {
+  id         String   @id @default(cuid())
+  entityKind String
+  entityId   String
+  holderId   String
+  expiresAt  DateTime
+
+  @@unique([entityKind, entityId])
+}
+
 // Append-only. Every workpaper write emits one. Hash-chained for tamper-evidence.
 model Event {
   seq        Int      @id @default(autoincrement())
