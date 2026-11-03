@@ -129,6 +129,49 @@ older-base adjustment on a new version: equal to the adjustment's value →
 `absorbed`; equal to the old base → `rebased`; otherwise → `stale` (excluded,
 three values shown). The feed uses event **seq**, never timestamps.
 
+## Block 2 — Judgment (Feature 4)
+
+### D20 — Software flags; the CPA decides
+Checks and swings produce findings and offered decision *templates* (options,
+effects, evidence, authority) but never a decision. A `Decision` is invalid
+without authority, ≥1 evidence and (for real choices) ≥2 options. Nothing reaches
+the final until a decision is approved; judgment items stay out of the preview.
+
+### D21 — Decision dependency hash → reopen, with cascade
+`dependencyHash = hash(sorted evidence ids + their content hashes + current
+watched-line values)`. An approved decision whose hash changes flips to
+`reopened` (event + "what changed") and its adjustments (same issue) go **stale**
+— never silently reverted. Verified over the DB: approve C6 option B on the
+message → attach the bank statement → decision reopened, adjustment stale.
+
+### D22 — Evidence gate past "proposed"
+A decision whose required document is still missing (C6's bank line) cannot
+advance past `proposed` unless the CPA explicitly accepts weaker evidence
+(recorded) or the evidence is supplied.
+
+### D23 — Adjustments link to decisions via `issueId`
+No decision→adjustment FK exists, so "adjustments created from a decision" means
+they share the decision's `issueId`; the reopen cascade uses that link.
+
+### D24 — Due diligence: blocked-by-issue, reviewer signs
+Form 8867 for a credit is `blocked` while a linked issue is open (Theo's CTC is
+blocked by the open SSN-identity issue). The preparer completes; a reviewer who
+is not the preparer signs.
+
+### D25 — Completeness readiness is computed; attestation is human
+An area is green only when its open issues, pending decisions and undisposed
+documents are all zero. The preparer attests a green area; a non-green area needs
+an override reason a reviewer signs. The gate is green only when every expected
+document is matched/explained, every area is green and attested, Form 8867 is
+complete, no blocking issue is open, and outside filings are resolved.
+
+### D26 — Expected documents and outside filings are derived, not hardcoded
+`ExpectedDocument`s come from pass-through basis history (K-1s), the prior
+preparer's open items, and questionnaire answers implying a document, matched to
+a 2025 document. The outside-filings register is derived from related returns and
+engine diagnostics (FBAR, 8938, 3520, 1099-NEC, Woodworks 1120-S, Ridgeline 1065,
+Ada's 1040, Texas n/a).
+
 ## Open questions (carried to Block 2)
 - Coinhaven lot **C6** (F8949.H.C6): basis 0, engine used transfer-in date;
   message evidence says 2021 purchase ≈ $3,050 but the bank line is pending.

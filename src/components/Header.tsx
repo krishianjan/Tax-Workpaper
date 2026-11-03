@@ -9,9 +9,11 @@ const NAV = [
   { href: "/issues", label: "Issues" },
   { href: "/checks", label: "Checks" },
   { href: "/changes", label: "Changes" },
+  { href: "/decisions", label: "Decisions" },
+  { href: "/variance", label: "Variance" },
+  { href: "/completeness", label: "Completeness" },
   { href: "/compare", label: "Compare" },
   { href: "/what-if", label: "What-if" },
-  { href: "/schedules/8949", label: "8949" },
 ];
 
 export default async function Header() {
