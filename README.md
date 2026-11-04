@@ -79,10 +79,6 @@ the Feature 1 "must find" rows: D62 mismatch, D64 low-confidence, D10/D09
 duplicate, D31/D30 supersede + diff, 74/74 accounted, the F1040.1a recipe
 (212,400 = 104,600 + 107,800, D10 counted once), and 0 unresolved references.
 
-## Deploy (Vercel + Neon)
-
-Set `DATABASE_URL` to a Neon connection string, `npx prisma db push`, then
-`npm run seed` once. The only secret is `DATABASE_URL`.
 
 ## Layout
 
