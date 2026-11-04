@@ -25,13 +25,15 @@ export async function GET(req: Request) {
   const field = url.searchParams.get("field");
 
   try {
+    const ws = session.workspaceId;
     const rows = await prisma.viewLog.findMany({
-      where: { ...(actor ? { actorId: actor } : {}), ...(field ? { field } : {}) },
+      where: { workspaceId: ws, ...(actor ? { actorId: actor } : {}), ...(field ? { field } : {}) },
       orderBy: { at: "desc" },
     });
 
     await prisma.$transaction(async (tx) => {
       await emitEvent(tx, {
+        workspaceId: ws,
         actorId: session.staff.id,
         type: "viewlog.exported",
         entityKind: "view_log",

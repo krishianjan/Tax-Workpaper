@@ -20,8 +20,8 @@ export default async function FilingPage() {
   const model = loadModel();
   const session = await getSession();
   const versionId = currentVersion(model, session.asOf)?.version ?? "v3";
-  const adjustments = await loadAdjustments();
-  const decisions = await loadDecisions();
+  const adjustments = await loadAdjustments(session.workspaceId);
+  const decisions = await loadDecisions(session.workspaceId);
   const fin = returnTotals(model, versionId, "final", adjustments);
 
   const issues = groupIssues(model, runChecks({ model, versionId }), versionId);
@@ -35,20 +35,21 @@ export default async function FilingPage() {
   let filing: Array<{ jurisdiction: string; state: string }> = [];
   let conflicts: Array<{ eventId: string; scripted: string; finalState: string; resolution: string; note: string }> = [];
   try {
-    notes = (await prisma.reviewNote.findMany()) as unknown as ReviewNoteT[];
-    reopened = await prisma.signOff.count({ where: { status: "reopened" } });
-    stale = await prisma.adjustment.count({ where: { status: "stale" } });
-    sigCount = await prisma.signOff.count({ where: { scope: "form8879", status: "valid" } });
-    subs = await prisma.submission.findMany({ orderBy: { at: "asc" } });
-    filing = await prisma.filingStatus.findMany();
-    conflicts = await prisma.replayConflict.findMany();
+    const ws = session.workspaceId;
+    notes = (await prisma.reviewNote.findMany({ where: { workspaceId: ws } })) as unknown as ReviewNoteT[];
+    reopened = await prisma.signOff.count({ where: { status: "reopened", workspaceId: ws } });
+    stale = await prisma.adjustment.count({ where: { status: "stale", workspaceId: ws } });
+    sigCount = await prisma.signOff.count({ where: { scope: "form8879", status: "valid", workspaceId: ws } });
+    subs = await prisma.submission.findMany({ where: { workspaceId: ws }, orderBy: { at: "asc" } });
+    filing = await prisma.filingStatus.findMany({ where: { workspaceId: ws } });
+    conflicts = await prisma.replayConflict.findMany({ where: { workspaceId: ws } });
   } catch {
     /* ignore */
   }
 
   const steps = computeRequiredSteps({
     engagementSigned: true,
-    identityVerified: Boolean(await prisma.factCorrection.findFirst({ where: { extractedValueId: "household:theo:ssn" } }).catch(() => null)),
+    identityVerified: Boolean(await prisma.factCorrection.findFirst({ where: { extractedValueId: "household:theo:ssn", workspaceId: session.workspaceId } }).catch(() => null)),
     priorYearReviewed: true,
     documentsAccounted: dsum.accounted === dsum.total,
     variancesExplained: unexplained.length === 0,
@@ -56,8 +57,8 @@ export default async function FilingPage() {
     paymentsAgreed: adjustments.some((a) => a.status === "approved" && a.rateCategory === "payment"),
     dueDiligenceComplete: false,
     diagnosticsResolved: false,
-    reviewerSignedOff: Boolean(await prisma.signOff.findFirst({ where: { level: "reviewer", scope: "return", status: "valid" } }).catch(() => null)),
-    partnerSignedOff: Boolean(await prisma.signOff.findFirst({ where: { level: "partner", scope: "return", status: "valid" } }).catch(() => null)),
+    reviewerSignedOff: Boolean(await prisma.signOff.findFirst({ where: { level: "reviewer", scope: "return", status: "valid", workspaceId: session.workspaceId } }).catch(() => null)),
+    partnerSignedOff: Boolean(await prisma.signOff.findFirst({ where: { level: "partner", scope: "return", status: "valid", workspaceId: session.workspaceId } }).catch(() => null)),
     clientApproved: sigCount >= 2,
   });
   const gate = computeFilingGate({

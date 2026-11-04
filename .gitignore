@@ -11,3 +11,4 @@ prisma/dev.db
 uploads
 next-env.d.ts
 .tsbuildinfo
+tsconfig.tsbuildinfo

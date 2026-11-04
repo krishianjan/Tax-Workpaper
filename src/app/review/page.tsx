@@ -9,11 +9,13 @@ const SO_STYLE: Record<string, string> = { valid: "bg-emerald-100 text-emerald-8
 
 export default async function ReviewPage() {
   const model = loadModel();
+  const session = await (await import("@/lib/session")).getSession();
+  const wsId = session.workspaceId;
   let notes: Array<{ id: string; authorId: string; assigneeId: string | null; targetKind: string; targetId: string; severity: string; status: string }> = [];
   let signoffs: Array<{ id: string; level: string; scope: string; status: string; signedBy: string; reopenReason: string | null }> = [];
   try {
-    notes = await prisma.reviewNote.findMany({ orderBy: { createdAt: "desc" } });
-    signoffs = await prisma.signOff.findMany({ orderBy: { signedAt: "asc" } });
+    notes = await prisma.reviewNote.findMany({ where: { workspaceId: wsId }, orderBy: { createdAt: "desc" } });
+    signoffs = await prisma.signOff.findMany({ where: { workspaceId: wsId }, orderBy: { signedAt: "asc" } });
   } catch {
     /* ignore */
   }

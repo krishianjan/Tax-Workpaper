@@ -50,9 +50,11 @@ export function decisionToDomain(row: Row): Decision {
   };
 }
 
-export async function loadDecisions(): Promise<Decision[]> {
+const DEFAULT_WS = "ws-main";
+
+export async function loadDecisions(workspaceId: string = DEFAULT_WS): Promise<Decision[]> {
   try {
-    const rows = await prisma.decision.findMany({ orderBy: { createdAt: "asc" } });
+    const rows = await prisma.decision.findMany({ where: { workspaceId }, orderBy: { createdAt: "asc" } });
     return rows.map(decisionToDomain);
   } catch {
     return [];
@@ -68,17 +70,17 @@ export async function loadDecision(id: string): Promise<Decision | null> {
   }
 }
 
-export async function loadDueDiligence() {
+export async function loadDueDiligence(workspaceId: string = DEFAULT_WS) {
   try {
-    return await prisma.dueDiligence.findMany();
+    return await prisma.dueDiligence.findMany({ where: { workspaceId } });
   } catch {
     return [];
   }
 }
 
-export async function loadAreaReviews() {
+export async function loadAreaReviews(workspaceId: string = DEFAULT_WS) {
   try {
-    return await prisma.areaReview.findMany();
+    return await prisma.areaReview.findMany({ where: { workspaceId } });
   } catch {
     return [];
   }

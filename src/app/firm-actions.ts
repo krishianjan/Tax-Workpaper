@@ -21,7 +21,7 @@ class HttpError extends Error {
   }
 }
 
-async function staffActor(): Promise<Actor> {
+async function staffActor(): Promise<Actor & { ws: string }> {
   const s = await getSession();
   const st = loadModel().staffById.get(s.staff.id);
   return {
@@ -29,6 +29,7 @@ async function staffActor(): Promise<Actor> {
     role: s.staff.role as Actor["role"],
     clearance: s.staff.sensitive_data_clearance === true,
     activeFrom: (st as unknown as { active_from?: string })?.active_from ?? "2000-01-01",
+    ws: s.workspaceId,
   };
 }
 
@@ -72,6 +73,7 @@ export async function editStandard(formData: FormData): Promise<void> {
       data: { content: next as unknown as object, createdBy: actor.id, note: p.data.note ?? null, active: true },
     });
     await emitEvent(tx, {
+      workspaceId: actor.ws,
       actorId: actor.id,
       type: "standard.versioned",
       entityKind: "firm_standard",
@@ -104,7 +106,7 @@ export async function seedSensitiveStore(): Promise<void> {
         },
       });
     }
-    await emitEvent(tx, { actorId: actor.id, type: "sensitive.seeded", entityKind: "sensitive", entityId: "store", payload: { count: fields.length } });
+    await emitEvent(tx, { workspaceId: actor.ws, actorId: actor.id, type: "sensitive.seeded", entityKind: "sensitive", entityId: "store", payload: { count: fields.length } });
   });
   revalidatePath("/admin/access");
 }
@@ -131,8 +133,8 @@ export async function revealSensitive(formData: FormData): Promise<string> {
   const plaintext = decryptField({ ciphertext: row.ciphertext, iv: row.iv, authTag: row.authTag } as Encrypted);
 
   await prisma.$transaction(async (tx) => {
-    const v = await tx.viewLog.create({ data: { actorId: actor.id, field: row.kind, entityId: p.data.ref, reason: p.data.reason } });
-    await emitEvent(tx, { actorId: actor.id, type: "sensitive.revealed", entityKind: "view_log", entityId: v.id, payload: { ref: p.data.ref, kind: row.kind } });
+    const v = await tx.viewLog.create({ data: { workspaceId: actor.ws, actorId: actor.id, field: row.kind, entityId: p.data.ref, reason: p.data.reason } });
+    await emitEvent(tx, { workspaceId: actor.ws, actorId: actor.id, type: "sensitive.revealed", entityKind: "view_log", entityId: v.id, payload: { ref: p.data.ref, kind: row.kind } });
   });
   revalidatePath("/admin/access");
   return plaintext;
@@ -179,7 +181,7 @@ export async function deactivateStaff(formData: FormData): Promise<void> {
     });
     // Revoke sessions by invalidating any active assignments (forces reassignment flow).
     await tx.assignment.updateMany({ where: { staffId: p.data.staffId, active: true }, data: { active: false } });
-    await emitEvent(tx, { actorId: actor.id, type: "staff.deactivated", entityKind: "staff", entityId: p.data.staffId, payload: { at: now } });
+    await emitEvent(tx, { workspaceId: actor.ws, actorId: actor.id, type: "staff.deactivated", entityKind: "staff", entityId: p.data.staffId, payload: { at: now } });
   });
   revalidatePath("/admin/staff");
 }
@@ -202,6 +204,7 @@ export async function changeClearance(formData: FormData): Promise<void> {
     });
     const ev = clearanceChangeEvent({ staffId: p.data.staffId, from: current, to: p.data.clearance, by: actor.id, at: now });
     await emitEvent(tx, {
+      workspaceId: actor.ws,
       actorId: actor.id,
       type: ev.type,
       entityKind: ev.entityKind,

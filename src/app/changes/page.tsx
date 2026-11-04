@@ -9,7 +9,7 @@ async function loadEvents(): Promise<{ rows: FeedEventRow[]; cursor: number }> {
   try {
     const session = await getSession();
     const [events, cur] = await Promise.all([
-      prisma.event.findMany({ orderBy: { seq: "asc" }, take: 1000 }),
+      prisma.event.findMany({ where: { workspaceId: session.workspaceId }, orderBy: { seq: "asc" }, take: 1000 }),
       prisma.userCursor.findUnique({ where: { userId: session.staff.id } }),
     ]);
     return {

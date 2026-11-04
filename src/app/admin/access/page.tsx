@@ -32,7 +32,7 @@ export default async function AccessPage() {
 
   let viewLogs: Array<{ id: string; actorId: string; field: string; entityId: string; at: Date }> = [];
   try {
-    viewLogs = await prisma.viewLog.findMany({ orderBy: { at: "desc" }, take: 20 });
+    viewLogs = await prisma.viewLog.findMany({ where: { workspaceId: session.workspaceId }, orderBy: { at: "desc" }, take: 100 });
   } catch {
     /* ignore */
   }

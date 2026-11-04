@@ -5,9 +5,10 @@ import { askQuestion, answerQuestion, acceptQuestion } from "@/app/people-action
 const Q_STYLE: Record<string, string> = { open: "bg-sky-100 text-sky-800", answered: "bg-amber-100 text-amber-800", accepted: "bg-emerald-100 text-emerald-800", rejected: "bg-red-100 text-red-800", withdrawn: "bg-slate-200 text-slate-700" };
 
 export default async function QuestionsPage() {
+  const session = await (await import("@/lib/session")).getSession();
   let questions: Array<{ id: string; fromId: string; toId: string; targetKind: string; targetId: string; text: string; status: string; blocksFiling: boolean }> = [];
   try {
-    questions = await prisma.question.findMany({ orderBy: { createdAt: "desc" } });
+    questions = await prisma.question.findMany({ where: { workspaceId: session.workspaceId }, orderBy: { createdAt: "desc" } });
   } catch {
     /* ignore */
   }

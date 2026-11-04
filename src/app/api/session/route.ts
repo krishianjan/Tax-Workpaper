@@ -9,12 +9,15 @@ export async function POST(req: Request) {
   const form = await req.formData();
   const role = String(form.get("role") ?? "st-01");
   const asOf = String(form.get("asOf") ?? "");
+  const workspaceId = form.get("workspaceId") ? String(form.get("workspaceId")) : null;
 
+  const next = form.get("next") ? String(form.get("next")) : null;
   const referer = req.headers.get("referer");
-  const back = referer && URL.canParse(referer) ? new URL(referer).pathname + new URL(referer).search : "/";
-  const res = NextResponse.redirect(new URL(back || "/", req.url), { status: 303 });
+  const back = next ?? (referer && URL.canParse(referer) ? new URL(referer).pathname + new URL(referer).search : "/overview");
+  const res = NextResponse.redirect(new URL(back || "/overview", req.url), { status: 303 });
 
   res.cookies.set("wp_role", role, { httpOnly: false, sameSite: "lax", path: "/" });
   if (asOf) res.cookies.set("wp_asof", asOf, { httpOnly: false, sameSite: "lax", path: "/" });
+  if (workspaceId) res.cookies.set("wp_workspace", workspaceId, { httpOnly: false, sameSite: "lax", path: "/" });
   return res;
 }

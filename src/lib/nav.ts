@@ -27,7 +27,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     key: "overview",
     label: "Overview",
-    items: [{ label: "Overview", href: "/", clientVisible: true }],
+    items: [{ label: "Overview", href: "/overview", clientVisible: true }],
   },
   {
     key: "evidence",
@@ -123,7 +123,7 @@ export function breadcrumbFor(pathname: string): { group: string; page: string }
   let best: { group: string; page: string; len: number } | null = null;
   for (const g of NAV_GROUPS) {
     for (const it of g.items) {
-      const match = it.href === "/" ? pathname === "/" : pathname === it.href || pathname.startsWith(it.href + "/");
+      const match = pathname === it.href || pathname.startsWith(it.href + "/");
       if (match && (!best || it.href.length > best.len)) best = { group: g.label, page: it.label, len: it.href.length };
     }
   }

@@ -10,6 +10,7 @@ import { computeDocumentLinks, computePageDuplicates } from "../evidence/links";
 import { seedFromPacket } from "../firm/standards";
 import { collectSensitiveFields } from "../firm/sensitiveCatalog";
 import { encryptField, maskToken } from "../firm/sensitive";
+import { seedSystemWorkspaces } from "../firm/workspace";
 
 export interface ImportReport {
   imported: boolean;
@@ -308,6 +309,9 @@ export async function importPacket(buf: Buffer): Promise<ImportReport> {
     },
     { timeout: 180000, maxWait: 30000 },
   );
+
+  // Seed the two system workspaces (idempotent — upsert).
+  await seedSystemWorkspaces();
 
   return {
     imported: true,

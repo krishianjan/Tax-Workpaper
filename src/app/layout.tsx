@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/Header";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { GuidedTour } from "@/components/GuidedTour";
 
 export const metadata: Metadata = {
   title: "Miraflores Tax Workpaper",
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Breadcrumbs />
           {children}
         </main>
+        <GuidedTour />
       </body>
     </html>
   );

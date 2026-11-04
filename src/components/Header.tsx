@@ -6,10 +6,13 @@ import { loadBadgeCounts } from "@/lib/navBadges";
 import type { Actor } from "@/lib/people/permissions";
 import { NavMenu } from "@/components/NavMenu";
 import { HeaderSearch } from "@/components/HeaderSearch";
+import { listWorkspaces } from "@/lib/firm/workspace";
 
 export default async function Header() {
   const session = await getSession();
   const model = loadModel();
+  let workspaces: Array<{ id: string; name: string; archivedAt: Date | null }> = [];
+  try { workspaces = await listWorkspaces(); } catch { /* DB not ready */ }
 
   const st = model.staffById.get(session.staff.id);
   const actor: Actor = {
@@ -32,7 +35,20 @@ export default async function Header() {
 
         <div className="ml-auto flex items-center gap-2">
           <HeaderSearch />
-          <form action="/api/session" method="post" className="flex items-center gap-1 text-xs">
+          <form action="/api/session" method="post" className="flex flex-wrap items-center gap-1 text-xs">
+            {workspaces.length > 0 && (
+              <select
+                name="workspaceId"
+                aria-label="Workspace"
+                defaultValue={session.workspaceId}
+                className="rounded border border-sky-300 bg-sky-50 px-1 py-0.5 text-sky-900"
+                title="Switch workspace — each evaluator should fork their own copy"
+              >
+                {workspaces.filter((w) => !w.archivedAt).map((w) => (
+                  <option key={w.id} value={w.id}>{w.name}</option>
+                ))}
+              </select>
+            )}
             <select
               name="role"
               aria-label="Acting role"

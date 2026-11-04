@@ -27,9 +27,9 @@ class HttpError extends Error {
   }
 }
 
-async function actor(): Promise<ActorRef> {
+async function actor(): Promise<ActorRef & { ws: string }> {
   const s = await getSession();
-  return { id: s.staff.id, role: s.staff.role };
+  return { id: s.staff.id, role: s.staff.role, ws: s.workspaceId };
 }
 
 /** Stable content hash of an evidence id from the packet (ev / doc / client item). */
@@ -95,6 +95,7 @@ export async function createDecision(formData: FormData): Promise<void> {
   await prisma.$transaction(async (tx) => {
     const row = await tx.decision.create({
       data: {
+        workspaceId: me.ws,
         issueId: d.issueId ?? tpl?.issueHint ?? null,
         question: d.question,
         facts: d.facts ?? tpl?.facts ?? null,
@@ -111,6 +112,7 @@ export async function createDecision(formData: FormData): Promise<void> {
       },
     });
     await emitEvent(tx, {
+      workspaceId: me.ws,
       actorId: me.id,
       type: "decision.proposed",
       entityKind: "decision",
@@ -159,6 +161,7 @@ export async function transitionDecision(formData: FormData): Promise<void> {
       },
     });
     await emitEvent(tx, {
+      workspaceId: me.ws,
       actorId: me.id,
       type: `decision.${res.patch?.status ?? p.data.action}`,
       entityKind: "decision",
@@ -167,10 +170,11 @@ export async function transitionDecision(formData: FormData): Promise<void> {
     });
 
     if (p.data.action === "reopen" || p.data.action === "supersede") {
-      const adjs = await loadAdjustments();
+      const adjs = await loadAdjustments(me.ws);
       for (const a of adjustmentsToStale(dec.issueId, adjs)) {
         await tx.adjustment.update({ where: { id: a.id }, data: { status: "stale", version: { increment: 1 } } });
         await emitEvent(tx, {
+          workspaceId: me.ws,
           actorId: me.id,
           type: "adjustment.stale",
           entityKind: "adjustment",
@@ -210,6 +214,7 @@ export async function attachDecisionEvidence(formData: FormData): Promise<void> 
       },
     });
     await emitEvent(tx, {
+      workspaceId: me.ws,
       actorId: me.id,
       type: reopen ? "decision.reopened" : "decision.evidence_added",
       entityKind: "decision",
@@ -218,10 +223,10 @@ export async function attachDecisionEvidence(formData: FormData): Promise<void> 
     });
 
     if (reopen) {
-      const adjs = await loadAdjustments();
+      const adjs = await loadAdjustments(me.ws);
       for (const a of adjustmentsToStale(dec.issueId, adjs)) {
         await tx.adjustment.update({ where: { id: a.id }, data: { status: "stale", version: { increment: 1 } } });
-        await emitEvent(tx, { actorId: me.id, type: "adjustment.stale", entityKind: "adjustment", entityId: a.id, payload: { cause: `decision ${id} reopened` } });
+        await emitEvent(tx, { workspaceId: me.ws, actorId: me.id, type: "adjustment.stale", entityKind: "adjustment", entityId: a.id, payload: { cause: `decision ${id} reopened` } });
       }
     }
   });
@@ -234,7 +239,7 @@ export async function acceptWeakEvidence(formData: FormData): Promise<void> {
   const me = await actor();
   await prisma.decision.update({ where: { id }, data: { weakEvidenceAccepted: true } });
   await prisma.$transaction((tx) =>
-    emitEvent(tx, { actorId: me.id, type: "decision.weak_evidence_accepted", entityKind: "decision", entityId: id, payload: {} }),
+    emitEvent(tx, { workspaceId: me.ws, actorId: me.id, type: "decision.weak_evidence_accepted", entityKind: "decision", entityId: id, payload: {} }),
   );
   revalidatePath("/decisions");
 }
@@ -259,6 +264,7 @@ export async function explainVariance(formData: FormData): Promise<void> {
   await prisma.$transaction(async (tx) => {
     const row = await tx.decision.create({
       data: {
+        workspaceId: me.ws,
         issueId: `variance:${d.key2025}`,
         question: `Explain the year-over-year change in ${d.key2025}`,
         facts: d.reason,
@@ -273,6 +279,7 @@ export async function explainVariance(formData: FormData): Promise<void> {
       },
     });
     await emitEvent(tx, {
+      workspaceId: me.ws,
       actorId: me.id,
       type: "decision.proposed",
       entityKind: "decision",
@@ -292,8 +299,8 @@ export async function attestArea(formData: FormData): Promise<void> {
   if (readiness !== "green" && reason.length < 10)
     throw new HttpError(422, "Attesting a non-green area requires an override reason (a reviewer signs it).");
   await prisma.areaReview.upsert({
-    where: { area },
-    create: { area, computedReadiness: readiness, attestedBy: me.id, attestedAt: new Date(), reason: reason || null },
+    where: { workspaceId_area: { workspaceId: me.ws, area } },
+    create: { workspaceId: me.ws, area, computedReadiness: readiness, attestedBy: me.id, attestedAt: new Date(), reason: reason || null },
     update: { computedReadiness: readiness, attestedBy: me.id, attestedAt: new Date(), reason: reason || null },
   });
   revalidatePath("/completeness");

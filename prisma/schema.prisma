@@ -166,10 +166,30 @@ model PacketBlob {
 }
 
 // ---------------------------------------------------------------------------
+// Gap 1 — Workspace isolation. Every C-layer table carries workspaceId.
+// Default "ws-main" means all existing rows belong to the worked-file workspace
+// and existing queries continue to work without modification until they are
+// made workspace-aware. ws-clean is the "as delivered" empty workspace.
+// ---------------------------------------------------------------------------
+model Workspace {
+  id         String    @id @default(cuid())
+  name       String
+  label      String    @default("")
+  kind       String    @default("fork") // clean | worked | fork
+  forkedFrom String?
+  archivedAt DateTime?
+  createdAt  DateTime  @default(now())
+  createdBy  String?
+
+  @@index([kind])
+}
+
+// ---------------------------------------------------------------------------
 // Layer C — Workpaper (ours). Grows in later blocks. Confidence is never a status.
 // ---------------------------------------------------------------------------
 model Verification {
   id               String   @id @default(cuid())
+  workspaceId      String   @default("ws-main")
   extractedValueId String
   status           String // agreed_to_source | mismatch_with_source | not_printed | needs_human | human_verified | human_corrected
   method           String // auto | human
@@ -181,50 +201,64 @@ model Verification {
   note             String?
   version          Int      @default(0)
 
+  @@index([workspaceId])
   @@index([extractedValueId])
 }
 
 model DocumentLink {
-  id        String @id @default(cuid())
-  fromDocId String
-  toDocId   String
-  kind      String // duplicate_of | supersedes | same_issuer | related_prior_year
-  basis     Json?
-  method    String // auto | human
-  actorId   String?
+  id          String @id @default(cuid())
+  workspaceId String @default("ws-main")
+  fromDocId   String
+  toDocId     String
+  kind        String // duplicate_of | supersedes | same_issuer | related_prior_year
+  basis       Json?
+  method      String // auto | human
+  actorId     String?
 
+  @@index([workspaceId])
   @@index([fromDocId])
   @@index([toDocId])
 }
 
 model PageLink {
   id              String @id @default(cuid())
+  workspaceId     String @default("ws-main")
   docId           String
   pageNo          Int
   duplicateOfPage Int
   basis           Json?
 
+  @@index([workspaceId])
   @@index([docId])
 }
 
 model Disposition {
-  documentId String @id
-  status     String // used | duplicate_not_counted | superseded | partial_extraction | structured_elsewhere | received_after_return | unaccounted
-  reason     String?
-  refs       String[]
+  id          String @id @default(cuid())
+  workspaceId String @default("ws-main")
+  documentId  String
+  status      String // used | duplicate_not_counted | superseded | partial_extraction | structured_elsewhere | received_after_return | unaccounted
+  reason      String?
+  refs        String[]
+
+  @@unique([workspaceId, documentId])
+  @@index([workspaceId])
 }
 
 model CheckRun {
   id          String   @id @default(cuid())
+  workspaceId String   @default("ws-main")
   versionId   String
   at          DateTime @default(now())
   codeVersion String?
 
   results CheckResult[]
+
+  @@index([workspaceId])
 }
 
 model CheckResult {
   id           String  @id // stable finding id = sha256(checkId + sorted refs)
+  workspaceId  String  @default("ws-main")
   runId        String
   checkId      String
   status       String // pass | fail | warn | info
@@ -241,30 +275,36 @@ model CheckResult {
 
   run CheckRun @relation(fields: [runId], references: [id])
 
+  @@index([workspaceId])
   @@index([runId])
   @@index([checkId])
 }
 
 model Attachment {
-  id         String   @id @default(cuid())
-  kind       String // file | message | note
-  storageUri String?
-  sha256     String?
-  text       String?
-  uploadedBy String?
-  at         DateTime @default(now())
+  id          String   @id @default(cuid())
+  workspaceId String   @default("ws-main")
+  kind        String // file | message | note
+  storageUri  String?
+  sha256      String?
+  text        String?
+  uploadedBy  String?
+  at          DateTime @default(now())
 
   links AttachmentLink[]
+
+  @@index([workspaceId])
 }
 
 model AttachmentLink {
   id           String @id @default(cuid())
+  workspaceId  String @default("ws-main")
   attachmentId String
   targetKind   String // document | extracted_value | line | check_result
   targetId     String
 
   attachment Attachment @relation(fields: [attachmentId], references: [id])
 
+  @@index([workspaceId])
   @@index([targetKind, targetId])
 }
 
@@ -273,6 +313,7 @@ model AttachmentLink {
 // ---------------------------------------------------------------------------
 model Issue {
   id          String   @id // stable fingerprint
+  workspaceId String   @default("ws-main")
   title       String
   area        String
   kind        String
@@ -284,10 +325,14 @@ model Issue {
   dismissReason String?
   version     Int      @default(0)
   createdAt   DateTime @default(now())
+
+  @@index([workspaceId])
+  @@index([status])
 }
 
 model Adjustment {
   id            String   @id @default(cuid())
+  workspaceId   String   @default("ws-main")
   issueId       String?
   baseVersionId String
   targets       Json // AdjTarget[]
@@ -313,12 +358,14 @@ model Adjustment {
   createdAt     DateTime @default(now())
   approvedAt    DateTime?
 
+  @@index([workspaceId])
   @@index([issueId])
   @@index([status])
 }
 
 model FactCorrection {
   id               String   @id @default(cuid())
+  workspaceId      String   @default("ws-main")
   extractedValueId String
   original         Json // read-only copy
   corrected        Json
@@ -328,21 +375,26 @@ model FactCorrection {
   actorId          String?
   at               DateTime @default(now())
 
+  @@index([workspaceId])
   @@index([extractedValueId])
 }
 
 model Batch {
-  id             String   @id @default(cuid())
-  actorId        String?
-  action         String
-  itemRefs       String[]
-  previewHash    String?
-  appliedAt      DateTime @default(now())
+  id              String   @id @default(cuid())
+  workspaceId     String   @default("ws-main")
+  actorId         String?
+  action          String
+  itemRefs        String[]
+  previewHash     String?
+  appliedAt       DateTime @default(now())
   undoneByBatchId String?
+
+  @@index([workspaceId])
 }
 
 model Snapshot {
   id          String   @id @default(cuid())
+  workspaceId String   @default("ws-main")
   label       String
   kind        String // engine_version | review_point | client_signed | filed | manual
   eventSeq    Int
@@ -350,25 +402,34 @@ model Snapshot {
   contentHash String
   lines       Json
   createdAt   DateTime @default(now())
+
+  @@index([workspaceId])
 }
 
 model Scenario {
   id             String   @id @default(cuid())
+  workspaceId    String   @default("ws-main")
   ownerId        String?
   baseSnapshotId String?
   changes        Json
   result         Json
   promotedToIds  String[]
   createdAt      DateTime @default(now())
+
+  @@index([workspaceId])
 }
 
 model UserCursor {
   userId      String @id
+  workspaceId String @default("ws-main")
   lastSeenSeq Int    @default(0)
+
+  @@index([workspaceId])
 }
 
 model Decision {
   id              String   @id @default(cuid())
+  workspaceId     String   @default("ws-main")
   issueId         String?
   question        String
   facts           String?
@@ -391,186 +452,228 @@ model Decision {
   standardVersion Int? // firm-standards version this was evaluated under (7.1)
   createdAt       DateTime @default(now())
 
+  @@index([workspaceId])
   @@index([issueId])
 }
 
 model DueDiligence {
-  id               String   @id @default(cuid())
-  credit           String
-  personId         String?
-  items            Json
-  status           String   @default("open")
+  id                String   @id @default(cuid())
+  workspaceId       String   @default("ws-main")
+  credit            String
+  personId          String?
+  items             Json
+  status            String   @default("open")
   blockedByIssueIds String[]
+
+  @@index([workspaceId])
 }
 
 model ExpectedDocument {
   id                String  @id @default(cuid())
+  workspaceId       String  @default("ws-main")
   source            String
   description       String
   matchedDocumentId String?
   status            String  @default("expected")
+
+  @@index([workspaceId])
 }
 
 model AreaReview {
-  area              String   @id
+  id                String   @id @default(cuid())
+  workspaceId       String   @default("ws-main")
+  area              String
   computedReadiness String
   attestedBy        String?
   attestedAt        DateTime?
   reason            String?
+
+  @@unique([workspaceId, area])
+  @@index([workspaceId])
 }
 
 model OutsideFiling {
-  id              String   @id @default(cuid())
-  filing          String
-  whoFiles        String?
-  inEngagement    Boolean  @default(false)
-  status          String   @default("open")
-  evidence        String[]
+  id               String    @id @default(cuid())
+  workspaceId      String    @default("ws-main")
+  filing           String
+  whoFiles         String?
+  inEngagement     Boolean   @default(false)
+  status           String    @default("open")
+  evidence         String[]
   clientNotifiedAt DateTime?
+
+  @@index([workspaceId])
 }
 
 // ---------------------------------------------------------------------------
 // Block 3 — People
 // ---------------------------------------------------------------------------
 model Question {
-  id          String   @id @default(cuid())
-  fromId      String
-  toId        String
-  targetKind  String
-  targetId    String
-  text        String
-  dueAt       DateTime?
-  status      String   @default("open")
-  blocksFiling Boolean @default(false)
+  id                 String    @id @default(cuid())
+  workspaceId        String    @default("ws-main")
+  fromId             String
+  toId               String
+  targetKind         String
+  targetId           String
+  text               String
+  dueAt              DateTime?
+  status             String    @default("open")
+  blocksFiling       Boolean   @default(false)
   answerAttachmentId String?
-  createdAt   DateTime @default(now())
+  createdAt          DateTime  @default(now())
 
+  @@index([workspaceId])
   @@index([targetKind, targetId])
 }
 
 model ReviewNote {
-  id         String   @id @default(cuid())
-  authorId   String
-  assigneeId String?
-  targetKind String
-  targetId   String
-  severity   String
-  status     String   @default("open")
-  thread     Json     @default("[]")
-  createdAt  DateTime @default(now())
+  id          String   @id @default(cuid())
+  workspaceId String   @default("ws-main")
+  authorId    String
+  assigneeId  String?
+  targetKind  String
+  targetId    String
+  severity    String
+  status      String   @default("open")
+  thread      Json     @default("[]")
+  createdAt   DateTime @default(now())
 
+  @@index([workspaceId])
   @@index([targetKind, targetId])
   @@index([status])
 }
 
 model SignOff {
-  id          String   @id @default(cuid())
-  level       String
-  scope       String
-  coveredRefs String[]
-  coveredHash String
-  signedBy    String
-  signedAt    DateTime @default(now())
-  status      String   @default("valid")
-  reopenReason String?
-  diff        String?
+  id              String   @id @default(cuid())
+  workspaceId     String   @default("ws-main")
+  level           String
+  scope           String
+  coveredRefs     String[]
+  coveredHash     String
+  signedBy        String
+  signedAt        DateTime @default(now())
+  status          String   @default("valid")
+  reopenReason    String?
+  diff            String?
   standardVersion Int? // firm-standards version this was signed under (7.1)
 
+  @@index([workspaceId])
   @@index([scope])
   @@index([status])
 }
 
 model Assignment {
-  id        String   @id @default(cuid())
-  scopeKind String
-  scopeId   String
-  staffId   String
-  role      String
-  dueAt     DateTime?
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
+  id          String    @id @default(cuid())
+  workspaceId String    @default("ws-main")
+  scopeKind   String
+  scopeId     String
+  staffId     String
+  role        String
+  dueAt       DateTime?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
 
+  @@index([workspaceId])
   @@index([staffId])
 }
 
 model Notification {
-  id       String   @id @default(cuid())
-  userId   String
-  type     String
-  entityId String
-  message  String
-  readAt   DateTime?
-  at       DateTime @default(now())
+  id          String    @id @default(cuid())
+  workspaceId String    @default("ws-main")
+  userId      String
+  type        String
+  entityId    String
+  message     String
+  readAt      DateTime?
+  at          DateTime  @default(now())
 
+  @@index([workspaceId])
   @@index([userId])
 }
 
 model TimeEntry {
-  id      String   @id @default(cuid())
-  staffId String
-  area    String
-  minutes Int
-  note    String?
-  at      DateTime @default(now())
+  id          String   @id @default(cuid())
+  workspaceId String   @default("ws-main")
+  staffId     String
+  area        String
+  minutes     Int
+  note        String?
+  at          DateTime @default(now())
 
+  @@index([workspaceId])
   @@index([area])
 }
 
 model ViewLog {
-  id      String   @id @default(cuid())
-  actorId String
-  field   String
-  entityId String
-  reason  String?
-  at      DateTime @default(now())
+  id          String   @id @default(cuid())
+  workspaceId String   @default("ws-main")
+  actorId     String
+  field       String
+  entityId    String
+  reason      String?
+  at          DateTime @default(now())
 
+  @@index([workspaceId])
   @@index([actorId])
 }
 
 model SoftLock {
-  id         String   @id @default(cuid())
-  entityKind String
-  entityId   String
-  holderId   String
-  expiresAt  DateTime
+  id          String   @id @default(cuid())
+  workspaceId String   @default("ws-main")
+  entityKind  String
+  entityId    String
+  holderId    String
+  expiresAt   DateTime
 
-  @@unique([entityKind, entityId])
+  @@unique([workspaceId, entityKind, entityId])
+  @@index([workspaceId])
 }
 
 // ---------------------------------------------------------------------------
 // Block 3 — Filing and after
 // ---------------------------------------------------------------------------
 model FilingStatus {
-  jurisdiction String   @id // federal | california
+  id           String   @id @default(cuid())
+  workspaceId  String   @default("ws-main")
+  jurisdiction String // federal | california
   state        String   @default("in_preparation")
   updatedAt    DateTime @default(now())
+
+  @@unique([workspaceId, jurisdiction])
+  @@index([workspaceId])
 }
 
 model Submission {
   id           String   @id // the agency submission id (immutable once rejected/accepted)
+  workspaceId  String   @default("ws-main")
   jurisdiction String
   snapshotHash String
   status       String // transmitted | rejected | accepted | not_transmitted
   errors       Json     @default("[]")
   at           DateTime
 
+  @@index([workspaceId])
   @@index([jurisdiction])
 }
 
 model Extension {
-  id                  String   @id @default(cuid())
-  form                String
-  filedBy             String
-  basisVersion        String
+  id                    String   @id @default(cuid())
+  workspaceId           String   @default("ws-main")
+  form                  String
+  filedBy               String
+  basisVersion          String
   estimatedBalanceCents BigInt
-  paidCents           BigInt
-  roundingRule        String
-  note                String
-  filedAt             DateTime @default(now())
+  paidCents             BigInt
+  roundingRule          String
+  note                  String
+  filedAt               DateTime @default(now())
+
+  @@index([workspaceId])
 }
 
 model AmendmentCase {
   id               String   @id @default(cuid())
+  workspaceId      String   @default("ws-main")
   jurisdiction     String
   reason           String
   baseSnapshotId   String // the filed snapshot — never mutated
@@ -578,46 +681,58 @@ model AmendmentCase {
   openedBy         String
   status           String   @default("open")
   createdAt        DateTime @default(now())
+
+  @@index([workspaceId])
 }
 
 model Notice {
-  id           String   @id // N-2025-L566
-  agency       String
-  type         String
-  taxYear      Int
-  dated        DateTime
-  responseDue  DateTime?
-  status       String   @default("open")
-  items        Json     @default("[]")
-  legalHold    Boolean  @default(true)
+  id               String    @id // N-2025-L566
+  workspaceId      String    @default("ws-main")
+  agency           String
+  type             String
+  taxYear          Int
+  dated            DateTime
+  responseDue      DateTime?
+  status           String    @default("open")
+  items            Json      @default("[]")
+  legalHold        Boolean   @default(true)
   responsePackHash String?
-  createdAt    DateTime @default(now())
+  createdAt        DateTime  @default(now())
+
+  @@index([workspaceId])
 }
 
 model ReplayConflict {
-  id         String   @id @default(cuid())
-  eventId    String
-  scripted   String
-  finalState String
-  resolution String
-  note       String
-  at         DateTime @default(now())
+  id          String   @id @default(cuid())
+  workspaceId String   @default("ws-main")
+  eventId     String
+  scripted    String
+  finalState  String
+  resolution  String
+  note        String
+  at          DateTime @default(now())
+
+  @@index([workspaceId])
 }
 
-// Append-only. Every workpaper write emits one. Hash-chained for tamper-evidence.
+// Append-only. Every workpaper write emits one. Hash-chained PER WORKSPACE for
+// tamper-evidence. seq is a global autoincrement (preserves global ordering);
+// the hash chain is scoped: prevHash is the last event in the same workspace.
 model Event {
-  seq        Int      @id @default(autoincrement())
-  id         String   @unique @default(cuid())
-  at         DateTime @default(now())
-  actorId    String?
-  type       String
-  entityKind String
-  entityId   String
-  payload    Json
-  prevHash   String?
-  hash       String
+  seq         Int      @id @default(autoincrement())
+  id          String   @unique @default(cuid())
+  workspaceId String   @default("ws-main")
+  at          DateTime @default(now())
+  actorId     String?
+  type        String
+  entityKind  String
+  entityId    String
+  payload     Json
+  prevHash    String?
+  hash        String
 
-  @@index([entityKind, entityId])
+  @@index([workspaceId])
+  @@index([workspaceId, entityKind, entityId])
 }
 
 // ---------------------------------------------------------------------------

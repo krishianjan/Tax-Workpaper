@@ -55,6 +55,7 @@ describe("breadcrumbs", () => {
   it("maps a nested route to Group › Page by longest prefix", () => {
     expect(breadcrumbFor("/records/tax-computation")).toEqual({ group: "Evidence", page: "Records" });
     expect(breadcrumbFor("/admin/standards")).toEqual({ group: "Firm", page: "Standards" });
-    expect(breadcrumbFor("/")).toEqual({ group: "Overview", page: "Overview" });
+    expect(breadcrumbFor("/overview")).toEqual({ group: "Overview", page: "Overview" });
+    expect(breadcrumbFor("/")).toBeNull(); // landing page has no breadcrumb
   });
 });

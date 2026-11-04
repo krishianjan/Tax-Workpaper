@@ -32,13 +32,15 @@ export async function addNote(formData: FormData): Promise<void> {
   if (!parsed.success) throw new Error("Invalid note: " + parsed.error.issues.map((i) => i.message).join(", "));
   const { targetKind, targetId, text } = parsed.data;
   const session = await getSession();
+  const ws = session.workspaceId;
 
   await prisma.$transaction(async (tx) => {
     const att = await tx.attachment.create({
-      data: { kind: "note", text, uploadedBy: session.staff.id },
+      data: { workspaceId: ws, kind: "note", text, uploadedBy: session.staff.id },
     });
-    await tx.attachmentLink.create({ data: { attachmentId: att.id, targetKind, targetId } });
+    await tx.attachmentLink.create({ data: { workspaceId: ws, attachmentId: att.id, targetKind, targetId } });
     await emitEvent(tx, {
+      workspaceId: ws,
       actorId: session.staff.id,
       type: "attachment.added",
       entityKind: targetKind,
@@ -70,10 +72,12 @@ export async function addHumanVerification(formData: FormData): Promise<void> {
   if (!parsed.success) throw new Error("Invalid verification: " + parsed.error.issues.map((i) => i.message).join(", "));
   const d = parsed.data;
   const session = await getSession();
+  const ws = session.workspaceId;
 
   await prisma.$transaction(async (tx) => {
     await tx.verification.create({
       data: {
+        workspaceId: ws,
         extractedValueId: d.extractedValueId,
         status: d.status,
         method: "human",
@@ -84,6 +88,7 @@ export async function addHumanVerification(formData: FormData): Promise<void> {
       },
     });
     await emitEvent(tx, {
+      workspaceId: ws,
       actorId: session.staff.id,
       type: "verification.recorded",
       entityKind: "extracted_value",

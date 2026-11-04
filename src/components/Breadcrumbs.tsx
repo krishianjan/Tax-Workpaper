@@ -7,7 +7,7 @@ import { breadcrumbFor } from "@/lib/nav";
 export function Breadcrumbs() {
   const pathname = usePathname() ?? "";
   const crumb = breadcrumbFor(pathname);
-  if (!crumb || pathname === "/") return null;
+  if (!crumb || pathname === "/" || pathname === "/overview") return null;
   return (
     <nav aria-label="Breadcrumb" className="mb-3 text-xs text-slate-500">
       <span>{crumb.group}</span>

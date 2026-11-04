@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "../db";
+import { DEFAULT_WORKSPACE } from "../session";
 import type { Adjustment, AdjTarget, AdjStatus, AdjMethod } from "./types";
 
 // Maps Prisma Adjustment rows to the pure-engine domain objects and back.
@@ -38,28 +39,28 @@ export function toDomain(row: Row): Adjustment {
   };
 }
 
-export async function loadAdjustments(): Promise<Adjustment[]> {
+export async function loadAdjustments(workspaceId: string = DEFAULT_WORKSPACE): Promise<Adjustment[]> {
   try {
-    const rows = await prisma.adjustment.findMany({ orderBy: { createdAt: "asc" } });
+    const rows = await prisma.adjustment.findMany({ where: { workspaceId }, orderBy: { createdAt: "asc" } });
     return rows.map(toDomain);
   } catch {
     return [];
   }
 }
 
-export async function loadAdjustmentsByIssue(issueId: string): Promise<Adjustment[]> {
+export async function loadAdjustmentsByIssue(issueId: string, workspaceId: string = DEFAULT_WORKSPACE): Promise<Adjustment[]> {
   try {
-    const rows = await prisma.adjustment.findMany({ where: { issueId }, orderBy: { createdAt: "asc" } });
+    const rows = await prisma.adjustment.findMany({ where: { issueId, workspaceId }, orderBy: { createdAt: "asc" } });
     return rows.map(toDomain);
   } catch {
     return [];
   }
 }
 
-/** Is the return frozen (filed)? Block 4 writes a 'filed' Snapshot. */
-export async function isFrozen(): Promise<boolean> {
+/** Is the return frozen (filed) in this workspace? */
+export async function isFrozen(workspaceId: string = DEFAULT_WORKSPACE): Promise<boolean> {
   try {
-    const filed = await prisma.snapshot.findFirst({ where: { kind: "filed" } });
+    const filed = await prisma.snapshot.findFirst({ where: { kind: "filed", workspaceId } });
     return Boolean(filed);
   } catch {
     return false;

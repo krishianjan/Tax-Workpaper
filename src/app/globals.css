@@ -60,6 +60,45 @@ button:focus-visible,
 .print-only {
   display: none;
 }
+/* Gap 3 — jargon tooltips. Opens on hover, keyboard focus, and tap. */
+.term-wrapper {
+  position: relative;
+  display: inline;
+}
+.term {
+  border-bottom: 1px dashed theme("colors.sky.500");
+  cursor: help;
+  color: inherit;
+}
+.term:focus-visible {
+  outline: 2px solid theme("colors.sky.300");
+  border-radius: 2px;
+  outline-offset: 1px;
+}
+.term-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: 60;
+  min-width: 200px;
+  max-width: 320px;
+  background: theme("colors.slate.900");
+  color: theme("colors.slate.50");
+  font-size: 0.75rem;
+  line-height: 1.5;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+  pointer-events: none;
+  white-space: normal;
+}
+.term-tooltip-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: theme("colors.sky.300");
+}
+
 @media print {
   body {
     @apply bg-white;

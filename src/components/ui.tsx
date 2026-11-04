@@ -47,7 +47,7 @@ export function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">{children}</h2>;
 }
 
-export function Stat({ label, value, sub }: { label: string; value: React.ReactNode; sub?: React.ReactNode }) {
+export function Stat({ label, value, sub }: { label: React.ReactNode; value: React.ReactNode; sub?: React.ReactNode }) {
   return (
     <div className="card p-4">
       <div className="text-xs uppercase tracking-wide text-slate-500">{label}</div>

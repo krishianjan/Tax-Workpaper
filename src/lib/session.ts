@@ -11,7 +11,10 @@ export interface Session {
   staff: PacketStaff;
   cleared: boolean;
   asOf: string;
+  workspaceId: string;
 }
+
+export const DEFAULT_WORKSPACE = "ws-main";
 
 const FALLBACK_STAFF: PacketStaff = {
   id: "st-01",
@@ -25,6 +28,7 @@ export async function getSession(): Promise<Session> {
   const jar = await cookies();
   const roleId = jar.get("wp_role")?.value ?? "st-01";
   const asOf = jar.get("wp_asof")?.value ?? DEFAULT_AS_OF;
+  const workspaceId = jar.get("wp_workspace")?.value ?? DEFAULT_WORKSPACE;
   const staff = model.staffById.get(roleId) ?? FALLBACK_STAFF;
-  return { staff, cleared: staff.sensitive_data_clearance === true, asOf };
+  return { staff, cleared: staff.sensitive_data_clearance === true, asOf, workspaceId };
 }

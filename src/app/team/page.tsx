@@ -24,8 +24,8 @@ export default async function TeamPage() {
   let times: Array<{ area: string; minutes: number }> = [];
   let dbAssignments: Array<{ staffId: string; role: string; scopeId: string }> = [];
   try {
-    times = await prisma.timeEntry.findMany({ select: { area: true, minutes: true } });
-    dbAssignments = await prisma.assignment.findMany({ where: { active: true }, select: { staffId: true, role: true, scopeId: true } });
+    times = await prisma.timeEntry.findMany({ where: { workspaceId: session.workspaceId }, select: { area: true, minutes: true } });
+    dbAssignments = await prisma.assignment.findMany({ where: { active: true, workspaceId: session.workspaceId }, select: { staffId: true, role: true, scopeId: true } });
   } catch {
     /* ignore */
   }
