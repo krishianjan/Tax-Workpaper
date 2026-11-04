@@ -1,15 +1,17 @@
 # Errors found
 
 Generated from the independent checks, then **grouped into Issues** (Block 2):
-one real-world problem may be flagged by several checks. **15 return-affecting
+one real-world problem may be flagged by several checks. **~17 return-affecting
 issues** on v3 (we did not target a count). Tax and payment effects are kept
 separate.
 
-**Final Δ (the 6 return-error rows + 2 payment rows), to the cent:**
-federal tax **−$18,232.99**, California tax **−$2,922.43**,
-federal balance **−$17,232.99**, California balance **+$577.57**
+**Final Δ (the 8 return-error rows + 2 payment rows, incl. the two Block-4
+cross-source errors), to the cent:**
+federal tax **−$18,830.16**, California tax **−$3,040.83**,
+federal balance **−$17,830.16**, California balance **+$459.17**
 (federal payment +$1,000 owed; CA payment +$3,500 owed). Judgment items (CA wage
-split, C6, phone/internet, Spotify, HVAC) are listed but excluded until approved.
+split, C6, phone/internet, Spotify, HVAC) and compliance items (nondeductible
+SEP, basis gaps) are listed but excluded until approved / resolved.
 
 ## (a) Errors that change the return
 
@@ -26,6 +28,8 @@ split, C6, phone/internet, Spotify, HVAC) are listed but excluded until approved
 | Provider named "Bright Oak Preschool" vs "Bright Oak Kids Club" (same EIN) | `PAYEE_NAME_CONSISTENCY` | name reconciliation |
 | AGI 228,409 → 445,590 (and other swings) | `PRIOR_YEAR_VARIANCE` | explain the swing |
 | Donated Subaru: client estimate $6,000 vs 1098-C gross proceeds $2,900 (D66) | `CLIENT_ESTIMATE_VS_THIRD_PARTY` | itemized −3,100; fed +$806.00, CA +$148.80 |
+| Same 1,840 sweep interest on D28 (Northlake Securities) and D29 (Northlake Bank), account 7731 | `CROSS_FORM_DUPLICATE_INCOME` | interest −1,840; fed −$640.32, CA −$126.96 |
+| Sparbanken interest (SEK 18,450) converted at the 2024 rate 10.56 instead of the 2025 rate 9.86 | `FX_RATE_PERIOD` | 1,747 → 1,871; Δ +124; fed +$43.15, CA +$8.56 |
 
 ## (b) Judgment calls (listed, not auto-applied)
 | Item | Why it's judgment |
@@ -43,6 +47,9 @@ split, C6, phone/internet, Spotify, HVAC) are listed but excluded until approved
 | 1099 filing obligation | Sch C paid two contractors ≥ $600 (`FORM_1099_FILING`) |
 | Due diligence (Form 8867) | CTC/ODC/AOTC/HOH (`DUE_DILIGENCE_REQUIRED`) |
 | California AMT (Sch P 540NR) not computed | ISO exercise (`CA_AMT_NOT_COMPUTED`) |
+| SEP contribution 2,786 nondeductible for 2025 (D26) | excise / corrective action — CPA to determine (`NONDEDUCTIBLE_CONTRIBUTION`) |
+| Ridgeline outside basis never computed; S-corp 2023/2024 stock basis null | reconstruct before relying on a loss/gain (`BASIS_GAP`) |
+| HVAC 11,000 inside SchE.14A repairs | repair vs improvement judgment (`EXPENSE_CLASSIFICATION_NOTE`) |
 
 ## Arithmetic integrity
 `SUM_RECOMPUTE` re-adds 93 summed lines. Differences are legitimate subtotals
@@ -52,4 +59,5 @@ that subtract (net profit, AGI). Reported at info level, triaged in DECISIONS.md
 ## Integrity results (this import)
 - Documents: **74** · Pages: **199** · Extracted values: **3,012** · Versions: **3** · Lines: **1,877**
 - Dispositions: **74/74 accounted**, 0 unaccounted · Unresolved references: **0**
-- Checks: **17** · Findings: **259** (55 fail / 71 warn / 133 info) · every finding has a stable id; re-running is idempotent
+- Checks: **27** (incl. `CROSS_FORM_DUPLICATE_INCOME`, `FX_RATE_PERIOD`, `NONDEDUCTIBLE_CONTRIBUTION`, `BASIS_GAP`, `TAX_COMPUTATION_RECOMPUTE`, `TIE_OUT`) · every finding has a stable id; re-running is idempotent
+- 17 CPA records (`/records`), each with a mode switch, linked numbers and a tie-out footer · 192 tests green
