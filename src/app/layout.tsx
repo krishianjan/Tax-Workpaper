@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/Header";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 export const metadata: Metadata = {
   title: "Miraflores Tax Workpaper",
@@ -10,9 +11,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className="min-h-screen">
         <Header />
-        <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
+        <main className="mx-auto w-full max-w-6xl px-4 py-5 sm:px-6 sm:py-6">
+          <Breadcrumbs />
+          {children}
+        </main>
       </body>
     </html>
   );

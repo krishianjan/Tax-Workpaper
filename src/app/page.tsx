@@ -9,6 +9,10 @@ import { formatDollars, formatCents } from "@/lib/money";
 import { Stat, SectionTitle, VerificationBadge, DispositionChip } from "@/components/ui";
 import type { VerificationStatus } from "@/lib/evidence/verify";
 import type { DispositionStatus } from "@/lib/evidence/disposition";
+import { groupIssues, returnAffecting } from "@/lib/issues/group";
+import { loadBadgeCounts } from "@/lib/navBadges";
+import { computeNextActions } from "@/lib/nextActions";
+import type { Actor } from "@/lib/people/permissions";
 
 function dollarsFromSummary(summary: unknown, path: string[]): string {
   let cur: unknown = summary;
@@ -39,6 +43,31 @@ export default async function OverviewPage() {
 
   const needsAttention = vsum.mismatch_with_source + vsum.needs_human + vsum.not_printed;
 
+  const actor: Actor = {
+    id: session.staff.id,
+    role: session.staff.role as Actor["role"],
+    clearance: session.cleared,
+    activeFrom: "2000-01-01",
+  };
+  const badges = await loadBadgeCounts(actor);
+  const openIssues = returnAffecting(groupIssues(model, findings, cur?.version ?? "v3")).length;
+  const recomputeResidual = findings.some((f) => f.checkId === "TAX_COMPUTATION_RECOMPUTE" && f.status === "warn");
+  const nextActions = computeNextActions({
+    openIssues,
+    needsAttention,
+    reviewOpen: badges.review,
+    questionsOpen: badges.questions,
+    decisionsPending: badges.decisions,
+    recomputeResidual,
+    clientApprovalPending: true,
+  });
+
+  const toneStyle: Record<string, string> = {
+    red: "border-l-red-400",
+    amber: "border-l-amber-400",
+    slate: "border-l-slate-300",
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -48,6 +77,27 @@ export default async function OverviewPage() {
           acting as {session.staff.id} ({session.staff.role})
         </p>
       </div>
+
+      <section>
+        <SectionTitle>Next actions</SectionTitle>
+        {nextActions.length === 0 ? (
+          <div className="card p-4 text-sm text-emerald-700">Nothing blocking — the return is ready for the next sign-off.</div>
+        ) : (
+          <ul className="space-y-2">
+            {nextActions.map((a) => (
+              <li key={a.href + a.label}>
+                <Link
+                  href={a.href}
+                  className={`flex items-center justify-between rounded-lg border border-l-4 border-slate-200 bg-white px-4 py-2 text-sm no-underline shadow-sm hover:border-slate-300 ${toneStyle[a.tone]}`}
+                >
+                  <span className="text-slate-800">{a.label}</span>
+                  {a.count ? <span className="chip bg-slate-100 text-slate-700">{a.count}</span> : <span aria-hidden className="text-slate-400">→</span>}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section>
         <SectionTitle>Return totals (federal)</SectionTitle>

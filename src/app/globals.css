@@ -26,6 +26,24 @@ a {
   @apply font-mono text-[0.8rem];
 }
 
+/* Loading spinner for route transitions and async actions. */
+.spinner {
+  @apply inline-block h-4 w-4 rounded-full border-2 border-slate-300 border-t-slate-600;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Keyboard focus is always visible for accessible menus. */
+a:focus-visible,
+button:focus-visible,
+[role="menuitem"]:focus-visible {
+  @apply outline-none ring-2 ring-sky-300;
+}
+
 /* Feature 8 records: print-ready (print CSS -> PDF). Hide the app chrome, show
    the print-only header/footer, and keep tables inside their box on phone width. */
 .scroll-box {
