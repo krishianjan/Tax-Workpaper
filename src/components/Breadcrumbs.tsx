@@ -5,7 +5,7 @@ import { breadcrumbFor } from "@/lib/nav";
 
 // Group › Page breadcrumb, derived from the nav map by longest-prefix match.
 export function Breadcrumbs() {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const crumb = breadcrumbFor(pathname);
   if (!crumb || pathname === "/") return null;
   return (

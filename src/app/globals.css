@@ -26,6 +26,14 @@ a {
   @apply font-mono text-[0.8rem];
 }
 
+/* Native <details> menus: hide the default disclosure triangle. */
+.nav-d > summary {
+  list-style: none;
+}
+.nav-d > summary::-webkit-details-marker {
+  display: none;
+}
+
 /* Loading spinner for route transitions and async actions. */
 .spinner {
   @apply inline-block h-4 w-4 rounded-full border-2 border-slate-300 border-t-slate-600;
