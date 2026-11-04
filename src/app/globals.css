@@ -25,3 +25,37 @@ a {
 .mono {
   @apply font-mono text-[0.8rem];
 }
+
+/* Feature 8 records: print-ready (print CSS -> PDF). Hide the app chrome, show
+   the print-only header/footer, and keep tables inside their box on phone width. */
+.scroll-box {
+  @apply overflow-x-auto;
+}
+.print-only {
+  display: none;
+}
+@media print {
+  body {
+    @apply bg-white;
+  }
+  header,
+  .no-print {
+    display: none !important;
+  }
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+  .print-only {
+    display: block;
+  }
+  .record {
+    font-size: 11px;
+  }
+  .record tr {
+    page-break-inside: avoid;
+  }
+  a {
+    @apply text-slate-900 no-underline;
+  }
+}

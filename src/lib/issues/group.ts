@@ -50,6 +50,8 @@ const CLASS: Record<string, { cls: string; kind: IssueKind; title: string }> = {
   NONDEDUCTIBLE_CONTRIBUTION: { cls: "nondeductible_sep", kind: "compliance", title: "Nondeductible retirement contribution" },
   BASIS_GAP: { cls: "basis_gap", kind: "scope", title: "Basis never computed" },
   EXPENSE_CLASSIFICATION_NOTE: { cls: "hvac_repair_improvement", kind: "judgment", title: "Repair vs improvement (HVAC)" },
+  TAX_COMPUTATION_RECOMPUTE: { cls: "tax_recompute", kind: "arithmetic", title: "Regular tax recompute" },
+  TIE_OUT: { cls: "tie_out", kind: "arithmetic", title: "Record tie-out" },
 };
 
 const CLS_TITLE: Record<string, string> = {

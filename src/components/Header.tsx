@@ -19,6 +19,7 @@ const NAV = [
   { href: "/filing", label: "Filing" },
   { href: "/amendments", label: "Amend" },
   { href: "/rollforward", label: "Rollforward" },
+  { href: "/records", label: "Records" },
   { href: "/firm", label: "Firm" },
   { href: "/firm/time", label: "Time" },
   { href: "/search", label: "Search" },

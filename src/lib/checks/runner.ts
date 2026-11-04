@@ -24,6 +24,8 @@ import { fxRatePeriod } from "./fxRatePeriod";
 import { nondeductibleContribution } from "./nondeductibleContribution";
 import { basisGap } from "./basisGap";
 import { hvacInsideRepairs } from "./hvacInsideRepairs";
+import { taxComputationRecompute } from "./taxComputationRecompute";
+import { tieOutCheck } from "./tieOut";
 
 export const ALL_CHECKS: Check[] = [
   sumRecompute,
@@ -51,6 +53,8 @@ export const ALL_CHECKS: Check[] = [
   nondeductibleContribution,
   basisGap,
   hvacInsideRepairs,
+  taxComputationRecompute,
+  tieOutCheck,
 ];
 
 export const CODE_VERSION = "block4-0";

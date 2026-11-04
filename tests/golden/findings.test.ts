@@ -196,6 +196,28 @@ describe("EXPENSE_CLASSIFICATION_NOTE", () => {
   });
 });
 
+describe("TAX_COMPUTATION_RECOMPUTE", () => {
+  const f = by("TAX_COMPUTATION_RECOMPUTE");
+  it("recomputes regular tax independently and reports the residual vs F1040.16", () => {
+    const r = f.find((x) => x.refs.includes("F1040.16"));
+    expect(r).toBeTruthy();
+    // Engine F1040.16 = 59,727; our Schedule D worksheet recompute = 59,980 (Δ +253 > $1).
+    expect(r!.expected).toBe(59727);
+    expect(r!.actual).toBe(59980);
+    expect(r!.status).toBe("warn");
+    expect(r!.delta).toBe(25300n);
+  });
+});
+
+describe("TIE_OUT", () => {
+  const f = by("TIE_OUT");
+  it("interest, capital gain and wages all tie to their roll-up lines", () => {
+    expect(f.length).toBe(3);
+    expect(f.every((r) => r.status === "pass")).toBe(true);
+    expect(has(f, (r) => r.refs.includes("F1040.2b") && r.refs.includes("SchB.1.1"))).toBe(true);
+  });
+});
+
 describe("stable + idempotent", () => {
   it("every finding has a 16-hex stable id", () => {
     for (const r of findings) expect(r.id, r.checkId).toMatch(/^[0-9a-f]{16}$|^error-/);
@@ -205,7 +227,7 @@ describe("stable + idempotent", () => {
     expect(new Set(again.map((r) => r.id))).toEqual(new Set(findings.map((r) => r.id)));
     expect(again.length).toBe(findings.length);
   });
-  it("runs all 25 checks", () => {
-    expect(ALL_CHECKS.length).toBe(25);
+  it("runs all 27 checks", () => {
+    expect(ALL_CHECKS.length).toBe(27);
   });
 });
