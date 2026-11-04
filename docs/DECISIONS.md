@@ -322,12 +322,38 @@ pure core mirrors the ranking (token overlap + trigram Jaccard fallback).
 legal hold that forces `hold`. The job is always `dryRun: true` — it lists what
 it would destroy and records the decision; nothing is ever deleted here.
 
+## Feature 8 — Records
+
+### D41 — Regular-tax recompute reports a residual, it does not assert the engine is wrong
+`TAX_COMPUTATION_RECOMPUTE` independently recomputes regular tax from
+`brackets_mfj` + the 0/15/20 LTCG thresholds, with unrecaptured §1250 at
+min(25%, the marginal ordinary rate) and 28%-rate gain. On this return it gets
+59,980 vs the engine's Schedule D Tax Worksheet 59,727 — a $253 residual, which
+the check REPORTS (status warn, no tax effect, "reconcile the worksheet"). The
+full IRS worksheet has ~45 lines with per-line rounding; reproducing it to the
+cent is out of scope. A reported residual is the honest second-source result and
+is exactly the kind of thing a CPA should eyeball before filing.
+
+### D42 — Record modes: engine/final are computed; filed/amendment resolve to approved
+A record's mode maps to the change-engine Mode via `toChangeMode` (engine→engine,
+everything else→final). `filed` and `amendment` share the approved set here; the
+page swaps in a filed `Snapshot` or amendment layer when one exists in the DB.
+Every record carries a snapshot hash (a content hash of its mode's totals) so a
+printed record is verifiable.
+
+### D43 — Tie-outs are internal cross-line reconciliations surfaced as checks
+Each record reconciles its subtotals to the return lines it summarizes; a failed
+tie-out is a `TIE_OUT` CheckResult, not just a red cell. The generic `TIE_OUT`
+check reconciles interest (ΣSchB.1.* → F1040.2b), capital gain (SchD.16 →
+F1040.7) and wages (F1040.1a → F1040.1z); per-record tie-outs (depreciation →
+SchE.18A/B, K-1 → SchE.32, itemized → F1040.12, etc.) live in each record and
+render in its footer.
+
 ## Open questions (carried forward)
 - Coinhaven lot **C6** (F8949.H.C6): basis 0, engine used transfer-in date;
   message evidence says 2021 purchase ≈ $3,050 but the bank line is pending.
   Needs the `MISSING_OR_ZERO_BASIS` check + a client question.
 - Whether any `partial_extraction` document should block a line pending the
   reconciliation check (D30/D31 page 32).
-- Feature 8 (Records): tie-out checks + `TAX_COMPUTATION_RECOMPUTE` are not yet
-  built; `standardVersion` is recorded on new writes but not yet surfaced per
-  record.
+- The $253 regular-tax residual (D41) should be chased to the exact Schedule D
+  Tax Worksheet line before filing.

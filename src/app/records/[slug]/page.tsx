@@ -18,6 +18,12 @@ import { Sales } from "@/components/records/Sales";
 import { BooksToTax } from "@/components/records/BooksToTax";
 import { Rentals } from "@/components/records/Rentals";
 import { K1Lines } from "@/components/records/K1Lines";
+import { Retirement } from "@/components/records/Retirement";
+import { Foreign } from "@/components/records/Foreign";
+import { DeductionsCredits } from "@/components/records/DeductionsCredits";
+import { StateSplit } from "@/components/records/StateSplit";
+import { BasisByYear } from "@/components/records/BasisByYear";
+import { PriorVsOurs } from "@/components/records/PriorVsOurs";
 
 export default async function RecordPage({
   params,
@@ -77,6 +83,18 @@ export default async function RecordPage({
       return <Rentals {...ctx} />;
     case "k1-lines":
       return <K1Lines {...ctx} />;
+    case "retirement":
+      return <Retirement {...ctx} />;
+    case "foreign":
+      return <Foreign {...ctx} />;
+    case "deductions-credits":
+      return <DeductionsCredits {...ctx} />;
+    case "state-split":
+      return <StateSplit {...ctx} />;
+    case "basis-by-year":
+      return <BasisByYear {...ctx} />;
+    case "prior-vs-ours":
+      return <PriorVsOurs {...ctx} />;
     default:
       notFound();
   }
