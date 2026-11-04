@@ -12,6 +12,12 @@ import { TaxComputation } from "@/components/records/TaxComputation";
 import { DocumentIndex } from "@/components/records/DocumentIndex";
 import { Payments } from "@/components/records/Payments";
 import { Carryovers } from "@/components/records/Carryovers";
+import { AreaSummaries } from "@/components/records/AreaSummaries";
+import { Depreciation } from "@/components/records/Depreciation";
+import { Sales } from "@/components/records/Sales";
+import { BooksToTax } from "@/components/records/BooksToTax";
+import { Rentals } from "@/components/records/Rentals";
+import { K1Lines } from "@/components/records/K1Lines";
 
 export default async function RecordPage({
   params,
@@ -59,6 +65,18 @@ export default async function RecordPage({
       return <Payments {...ctx} />;
     case "carryovers":
       return <Carryovers {...ctx} />;
+    case "area-summaries":
+      return <AreaSummaries {...ctx} />;
+    case "depreciation":
+      return <Depreciation {...ctx} />;
+    case "sales-detail":
+      return <Sales {...ctx} />;
+    case "books-to-tax":
+      return <BooksToTax {...ctx} />;
+    case "rentals":
+      return <Rentals {...ctx} />;
+    case "k1-lines":
+      return <K1Lines {...ctx} />;
     default:
       notFound();
   }
