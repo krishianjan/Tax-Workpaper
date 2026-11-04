@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { loadModel } from "@/lib/packet/load";
-import { setSession } from "@/app/actions";
 import { filterNav } from "@/lib/nav";
 import { loadBadgeCounts } from "@/lib/navBadges";
 import type { Actor } from "@/lib/people/permissions";
@@ -33,7 +32,7 @@ export default async function Header() {
 
         <div className="ml-auto flex items-center gap-2">
           <HeaderSearch />
-          <form action={setSession} className="flex items-center gap-1 text-xs">
+          <form action="/api/session" method="post" className="flex items-center gap-1 text-xs">
             <select
               name="role"
               aria-label="Acting role"
