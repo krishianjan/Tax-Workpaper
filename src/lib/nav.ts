@@ -62,7 +62,7 @@ export const NAV_GROUPS: NavGroup[] = [
     key: "file",
     label: "File",
     items: [
-      { label: "Approve & sign", href: "/client", clientVisible: true },
+      { label: "Client approval", href: "/client", clientVisible: true },
       { label: "Filing", href: "/filing" },
       { label: "Amendments", href: "/amendments" },
       { label: "Rollforward", href: "/rollforward" },
@@ -71,12 +71,14 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     key: "firm",
     label: "Firm",
+    // All staff can reach these pages (viewing is harmless); the server still
+    // enforces who may EDIT standards, manage staff, or reveal sensitive data.
     items: [
       { label: "Dashboard", href: "/firm" },
       { label: "Time", href: "/firm/time" },
-      { label: "Standards", href: "/admin/standards", action: "standards.manage" },
-      { label: "Staff", href: "/admin/staff", action: "staff.manage" },
-      { label: "Access", href: "/admin/access", roles: ["partner", "firm_administrator"] },
+      { label: "Standards", href: "/admin/standards" },
+      { label: "Staff", href: "/admin/staff" },
+      { label: "Access", href: "/admin/access" },
     ],
   },
 ];

@@ -6,33 +6,28 @@ const actor = (role: Actor["role"]): Actor => ({ id: role === "client" ? "cu-01"
 const labels = (role: Actor["role"], b: BadgeCounts = {}) => filterNav(actor(role), b).flatMap((g) => g.items.map((i) => i.label));
 
 describe("role-based nav (driven by can())", () => {
-  it("client sees only Overview, Questions, Approve & sign", () => {
+  it("client sees only Overview, Questions, Client approval", () => {
     const l = labels("client");
-    expect(new Set(l)).toEqual(new Set(["Overview", "Questions", "Approve & sign"]));
+    expect(new Set(l)).toEqual(new Set(["Overview", "Questions", "Client approval"]));
   });
 
-  it("preparer sees working groups but no Firm admin items", () => {
-    const l = labels("preparer");
-    expect(l).toContain("Issues");
-    expect(l).toContain("Dashboard"); // Firm dashboard is fine
-    expect(l).toContain("Time");
-    expect(l).not.toContain("Standards"); // standards.manage denied
-    expect(l).not.toContain("Staff");
-    expect(l).not.toContain("Access"); // partner/admin only
+  it("every staff role can reach all Firm pages (server enforces edits)", () => {
+    for (const role of ["preparer", "reviewer", "partner", "firm_administrator"] as Actor["role"][]) {
+      const l = labels(role);
+      expect(l, role).toContain("Issues");
+      expect(l, role).toContain("Dashboard");
+      expect(l, role).toContain("Time");
+      expect(l, role).toContain("Standards");
+      expect(l, role).toContain("Staff");
+      expect(l, role).toContain("Access");
+    }
   });
 
-  it("partner sees Access but not Standards/Staff", () => {
-    const l = labels("partner");
-    expect(l).toContain("Access");
-    expect(l).not.toContain("Standards");
-    expect(l).not.toContain("Staff");
-  });
-
-  it("firm administrator sees the Firm admin items", () => {
-    const l = labels("firm_administrator");
-    expect(l).toContain("Standards");
-    expect(l).toContain("Staff");
-    expect(l).toContain("Access");
+  it("the client never sees staff/Firm items", () => {
+    const l = labels("client");
+    for (const hidden of ["Issues", "Standards", "Staff", "Access", "Filing", "Documents"]) {
+      expect(l).not.toContain(hidden);
+    }
   });
 
   it("no Search tab exists in the nav", () => {
