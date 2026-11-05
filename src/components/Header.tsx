@@ -57,7 +57,7 @@ export default async function Header() {
             >
               {model.staff.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.id} · {s.role}
+                  {s.id} · {s.name}
                   {s.sensitive_data_clearance ? "" : " (masked)"}
                 </option>
               ))}

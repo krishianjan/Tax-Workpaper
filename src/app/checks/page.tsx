@@ -32,7 +32,7 @@ export default async function ChecksPage({ searchParams }: { searchParams: Promi
       </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat label="Failing (auto-applied)" value={preview.failingCount} />
+        <Stat label="Failing (preview only)" value={preview.failingCount} />
         <Stat label="Preview Δ tax (fed)" value={formatCents(preview.taxFed)} sub="v3 + Σ failing checks" />
         <Stat label="Preview Δ balance (fed)" value={formatCents(preview.balanceFed)} sub="tax − payments" />
         <Stat label="Total findings" value={findings.length} />
@@ -40,7 +40,7 @@ export default async function ChecksPage({ searchParams }: { searchParams: Promi
 
       <p className="rounded bg-slate-100 p-2 text-sm text-slate-600">
         Workpaper preview = {versionId} + Σ effects of failing checks (not yet approved). Judgment items are listed but not
-        added. Approval and sign-off arrive in Block 2 (People).
+        added.
       </p>
 
       <div className="flex flex-wrap gap-2 text-xs">

@@ -33,7 +33,7 @@ export function FindingCard({
         <span className={`chip ${STATUS[r.status]}`}>{r.status}</span>
         <span className="chip bg-sky-100 text-sky-800">{r.area}</span>
         <span className="mono text-xs text-slate-400">{r.checkId}</span>
-        {r.judgment ? <span className="chip bg-violet-100 text-violet-800">judgment — not auto-applied</span> : null}
+        {r.judgment ? <span className="chip bg-violet-100 text-violet-800">judgment — preview only</span> : null}
         <span className="mono text-[0.7rem] text-slate-300">#{r.id}</span>
       </div>
       <h3 className="mt-1 font-medium">{r.title}</h3>
